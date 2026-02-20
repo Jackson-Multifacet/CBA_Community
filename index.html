@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Christ Believers Assembly</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+      :root {
+        /* Grace (Light Blue - Default) */
+        --bg-card: 255 255 255;
+        --bg-main: 249 250 251; /* gray-50 */
+        --text-main: 17 24 39;    /* gray-900 */
+        --text-muted: 75 85 99;   /* gray-600 */
+        --text-inverted: 255 255 255;
+        
+        --church-50: 244 247 250;
+        --church-100: 227 235 245;
+        --church-200: 197 217 235;
+        --church-300: 150 186 221;
+        --church-400: 95 150 202;
+        --church-500: 59 120 176;
+        --church-600: 42 94 145;
+        --church-700: 35 75 118;
+        --church-800: 32 65 99;
+        --church-900: 30 56 83;
+        --church-950: 19 36 53;
+
+        --gold-500: 212 175 55;
+        --gold-600: 180 148 43;
+      }
+
+      [data-theme='eden'] {
+        /* Eden (Light Green) */
+        --bg-card: 255 255 255;
+        --bg-main: 245 247 245;
+        --text-main: 20 30 20;
+        --text-muted: 80 90 80;
+        
+        --church-50: 240 253 244;
+        --church-100: 220 252 231;
+        --church-200: 187 247 208;
+        --church-300: 134 239 172;
+        --church-400: 74 222 128;
+        --church-500: 34 197 94;
+        --church-600: 22 163 74;
+        --church-700: 21 128 61;
+        --church-800: 22 101 52;
+        --church-900: 20 83 45;
+        --church-950: 5 46 22;
+
+        --gold-500: 234 179 8;
+        --gold-600: 202 138 4;
+      }
+
+      [data-theme='midnight'] {
+        /* Midnight (Dark Blue) */
+        --bg-card: 30 41 59;      /* slate-800 */
+        --bg-main: 15 23 42;      /* slate-900 */
+        --text-main: 248 250 252; /* slate-50 */
+        --text-muted: 148 163 184;/* slate-400 */
+        --text-inverted: 15 23 42;
+
+        /* Adjust church colors to be visible on dark */
+        --church-50: 30 41 59; 
+        --church-100: 51 65 85;
+        --church-200: 71 85 105;
+        --church-300: 100 116 139;
+        --church-400: 148 163 184;
+        --church-500: 56 189 248; /* Sky blue for contrast */
+        --church-600: 14 165 233; /* Sky 500 */
+        --church-700: 2 132 199;
+        --church-800: 3 105 161;
+        --church-900: 12 74 110;
+        --church-950: 8 47 73;
+
+        --gold-500: 250 204 21;
+        --gold-600: 234 179 8;
+      }
+
+      [data-theme='vespers'] {
+        /* Vespers (Dark Purple) */
+        --bg-card: 46 16 101;     /* purple-950 base */
+        --bg-main: 26 5 55;       /* deep purple */
+        --text-main: 250 245 255; /* purple-50 */
+        --text-muted: 216 180 254;/* purple-300 */
+        --text-inverted: 26 5 55;
+
+        --church-50: 46 16 101;
+        --church-100: 59 7 100;
+        --church-200: 88 28 135;
+        --church-300: 107 33 168;
+        --church-400: 126 34 206;
+        --church-500: 147 51 234;
+        --church-600: 168 85 247; /* lighter purple for pop */
+        --church-700: 147 51 234;
+        --church-800: 126 34 206;
+        --church-900: 88 28 135;
+        --church-950: 59 7 100;
+
+        --gold-500: 251 191 36; /* Amber */
+        --gold-600: 245 158 11;
+      }
+
+      /* Custom Animations */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translate3d(0, 20px, 0);
+        }
+        to {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+        }
+      }
+
+      @keyframes scaleIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      
+      @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-6px); }
+        100% { transform: translateY(0px); }
+      }
+
+      .animate-fade-in-up {
+        animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+      
+      .animate-scale-in {
+        animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      .animate-float {
+        animation: float 4s ease-in-out infinite;
+      }
+
+      .glass-panel {
+        background: rgba(var(--bg-card) / 0.7);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(var(--text-main) / 0.05);
+      }
+      
+      .glass-morphism {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      /* Staggered animation delays */
+      .delay-100 { animation-delay: 100ms; }
+      .delay-200 { animation-delay: 200ms; }
+      .delay-300 { animation-delay: 300ms; }
+    </style>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              serif: ['Playfair Display', 'serif'],
+            },
+            colors: {
+              white: 'rgb(var(--bg-card) / <alpha-value>)', // Overriding white to be surface color
+              gray: {
+                50: 'rgb(var(--bg-main) / <alpha-value>)',  // Page bg
+                100: 'rgb(var(--bg-main) / <alpha-value>)', // Slight var
+                200: 'rgb(var(--church-200) / 0.2)',
+                300: 'rgb(var(--text-muted) / 0.3)',
+                400: 'rgb(var(--text-muted) / 0.6)',
+                500: 'rgb(var(--text-muted) / 0.8)',
+                600: 'rgb(var(--text-muted) / <alpha-value>)', // Secondary text
+                700: 'rgb(var(--text-main) / 0.8)',
+                800: 'rgb(var(--text-main) / 0.9)',
+                900: 'rgb(var(--text-main) / <alpha-value>)', // Main text
+              },
+              church: {
+                50: 'rgb(var(--church-50) / <alpha-value>)',
+                100: 'rgb(var(--church-100) / <alpha-value>)',
+                200: 'rgb(var(--church-200) / <alpha-value>)',
+                300: 'rgb(var(--church-300) / <alpha-value>)',
+                400: 'rgb(var(--church-400) / <alpha-value>)',
+                500: 'rgb(var(--church-500) / <alpha-value>)',
+                600: 'rgb(var(--church-600) / <alpha-value>)',
+                700: 'rgb(var(--church-700) / <alpha-value>)',
+                800: 'rgb(var(--church-800) / <alpha-value>)',
+                900: 'rgb(var(--church-900) / <alpha-value>)',
+                950: 'rgb(var(--church-950) / <alpha-value>)',
+              },
+              gold: {
+                500: 'rgb(var(--gold-500) / <alpha-value>)',
+                600: 'rgb(var(--gold-600) / <alpha-value>)',
+              }
+            }
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.40.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-gray-50 text-gray-900 antialiased transition-colors duration-300">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
