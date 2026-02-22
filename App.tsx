@@ -25,6 +25,9 @@ import Gallery from './pages/Gallery';
 import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import { DataProvider } from './context/DataContext';
+import { CurrencyProvider } from './context/CurrencyContext';
+
+import { Toaster } from 'sonner';
 
 const AppContent: React.FC = () => {
   const location = useLocation();
@@ -34,6 +37,7 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen font-sans bg-gray-50 transition-colors duration-300">
+      <Toaster position="top-right" richColors />
       <Navbar />
       <main className="flex-grow">
         <Routes>
@@ -67,11 +71,13 @@ function App() {
   return (
     <AuthProvider>
       <DataProvider>
-        <ThemeProvider>
-          <Router>
-            <AppContent />
-          </Router>
-        </ThemeProvider>
+        <CurrencyProvider>
+          <ThemeProvider>
+            <Router>
+              <AppContent />
+            </Router>
+          </ThemeProvider>
+        </CurrencyProvider>
       </DataProvider>
     </AuthProvider>
   );

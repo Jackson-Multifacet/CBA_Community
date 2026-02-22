@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { 
   CreditCard, 
   LayoutDashboard, 
@@ -29,16 +29,28 @@ import {
   Library as LibraryIcon,
   Newspaper,
   Book,
-  Brain
+  Brain,
+  Users
 } from 'lucide-react';
 import { WalletTransaction, InboxMessage, JournalEntry, Member } from '../types';
 import { generateDevotionalThought } from '../services/geminiService';
 import { useAuth } from '../context/AuthContext';
+import { useCurrency } from '../context/CurrencyContext';
+import CurrencySwitcher from '../components/CurrencySwitcher';
+import Community from '../components/community/Community';
 
 const MemberPortal: React.FC = () => {
   const { user, logout, updateProfile, isLoading, campuses } = useAuth();
+  const { formatAmount, currency } = useCurrency();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'wallet' | 'messages' | 'journal' | 'schedule' | 'profile'>('dashboard');
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'wallet' | 'messages' | 'journal' | 'schedule' | 'profile' | 'community'>('dashboard');
+  
+  useEffect(() => {
+    if (location.state?.tab) {
+        setActiveTab(location.state.tab);
+    }
+  }, [location]);
   
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editForm, setEditForm] = useState<Partial<Member>>({});
@@ -57,8 +69,12 @@ const MemberPortal: React.FC = () => {
   const [showGiveModal, setShowGiveModal] = useState(false);
   const [giveAmount, setGiveAmount] = useState('');
   const [givingType, setGivingType] = useState<'Tithe' | 'Offering'>('Tithe');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank'>('bank');
 
-  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([
+    { id: 'j1', date: '2023-11-02', content: 'Reflecting on Psalm 23 today. The Lord truly is my Shepherd.', aiReflection: 'This is a beautiful reflection on God\'s provision and guidance. Consider how He has led you in the past week.' },
+    { id: 'j2', date: '2023-10-28', content: 'Praying for the upcoming youth retreat.', aiReflection: 'Prayer is powerful. You might also want to reach out to the youth leaders to see if they need any specific support.' },
+  ]);
   const [newJournalContent, setNewJournalContent] = useState('');
   const [isGeneratingDevotional, setIsGeneratingDevotional] = useState(false);
 
@@ -85,10 +101,14 @@ const MemberPortal: React.FC = () => {
     if (!giveAmount) return;
     const amount = parseFloat(giveAmount);
     if (isNaN(amount) || amount <= 0) return;
+    
+    // In a real app, this would integrate with a payment gateway like Paystack
+    // For now, we just record the transaction
+    
     const newTransaction: WalletTransaction = {
       id: Date.now().toString(),
       date: new Date().toISOString().split('T')[0],
-      description: `Online ${givingType}`,
+      description: `Online ${givingType} (${paymentMethod === 'bank' ? 'Bank Transfer' : 'Card'})`,
       amount: amount,
       type: 'credit',
       category: givingType
@@ -96,12 +116,14 @@ const MemberPortal: React.FC = () => {
     setTransactions(prev => [newTransaction, ...prev]);
     setShowGiveModal(false);
     setGiveAmount('');
+    alert(paymentMethod === 'bank' ? 'Please complete the transfer using the details provided. Your wallet will be updated once confirmed.' : 'Payment successful!');
   };
 
   const handleSaveJournal = async () => {
     if (!newJournalContent.trim()) return;
     setIsGeneratingDevotional(true);
     const reflection = await generateDevotionalThought(newJournalContent);
+    
     const newEntry: JournalEntry = {
       id: Date.now().toString(),
       date: new Date().toLocaleDateString(),
@@ -109,6 +131,7 @@ const MemberPortal: React.FC = () => {
       aiReflection: reflection
     };
     setJournalEntries(prev => [newEntry, ...prev]);
+    
     setNewJournalContent('');
     setIsGeneratingDevotional(false);
   };
@@ -212,7 +235,7 @@ const MemberPortal: React.FC = () => {
           </div>
           <div className="p-6 flex gap-4">
               <div className="w-16 h-20 bg-gray-100 rounded shadow-md overflow-hidden flex-shrink-0">
-                  <img src="https://picsum.photos/100/150?random=b2" alt="Book" className="w-full h-full object-cover" />
+                  <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=200&q=80" alt="Book" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               </div>
               <div>
                   <h4 className="font-bold text-gray-900 text-sm">Foundation of Faith</h4>
@@ -295,15 +318,18 @@ const MemberPortal: React.FC = () => {
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-serif font-bold text-gray-900">Kingdom Wallet</h2>
-        <button onClick={() => setShowGiveModal(true)} className="bg-church-600 text-white px-6 py-2 rounded-full font-bold hover:bg-church-700 transition shadow-lg shadow-church-200/50 flex items-center gap-2">
-          <Heart size={18} /> Give Now
-        </button>
+        <div className="flex items-center gap-3">
+            <CurrencySwitcher />
+            <button onClick={() => setShowGiveModal(true)} className="bg-church-600 text-white px-6 py-2 rounded-full font-bold hover:bg-church-700 transition shadow-lg shadow-church-200/50 flex items-center gap-2">
+            <Heart size={18} /> Give Now
+            </button>
+        </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-gradient-to-br from-church-900 to-church-800 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
           <div className="relative z-10">
             <p className="text-church-200 text-sm font-medium mb-1">Total Giving (YTD)</p>
-            <h3 className="text-3xl font-bold">${calculateTotalGiving().toLocaleString('en-US', { minimumFractionDigits: 2 })}</h3>
+            <h3 className="text-3xl font-bold">{formatAmount(calculateTotalGiving())}</h3>
           </div>
         </div>
       </div>
@@ -325,12 +351,106 @@ const MemberPortal: React.FC = () => {
                 </div>
               </div>
               <span className={`font-bold ${t.type === 'credit' ? 'text-green-600' : 'text-gray-900'}`}>
-                {t.type === 'credit' ? '+' : '-'}${t.amount.toFixed(2)}
+                {t.type === 'credit' ? '+' : '-'}{formatAmount(t.amount)}
               </span>
             </div>
           ))}
         </div>
       </div>
+
+      {/* Give Modal */}
+      {showGiveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl animate-scale-in border border-gray-100">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Give Online</h3>
+              <button onClick={() => setShowGiveModal(false)} className="text-gray-400 hover:text-gray-600"><X size={24} /></button>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Amount</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">{currency.symbol}</span>
+                  <input 
+                    type="number" 
+                    value={giveAmount}
+                    onChange={(e) => setGiveAmount(e.target.value)}
+                    className="w-full pl-8 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-church-500 outline-none font-bold text-lg"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Type</label>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setGivingType('Tithe')}
+                    className={`flex-1 py-2 rounded-lg font-bold text-sm transition ${givingType === 'Tithe' ? 'bg-church-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  >
+                    Tithe
+                  </button>
+                  <button 
+                    onClick={() => setGivingType('Offering')}
+                    className={`flex-1 py-2 rounded-lg font-bold text-sm transition ${givingType === 'Offering' ? 'bg-church-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  >
+                    Offering
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Payment Method</label>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => setPaymentMethod('bank')}
+                    className={`flex-1 py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-2 ${paymentMethod === 'bank' ? 'bg-church-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                  >
+                    <Church size={16} /> Bank Transfer
+                  </button>
+                  <button 
+                    disabled
+                    className={`flex-1 py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-2 bg-gray-100 text-gray-400 cursor-not-allowed`}
+                  >
+                    <CreditCard size={16} /> Card (Coming Soon)
+                  </button>
+                </div>
+              </div>
+
+              {paymentMethod === 'bank' && (
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm">
+                  <p className="font-bold text-gray-900 mb-2">Bank Account Details</p>
+                  <div className="space-y-1 text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Bank Name:</span>
+                      <span className="font-medium text-gray-900">Unity Bank</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Account Name:</span>
+                      <span className="font-medium text-gray-900">Christ Believers Healing Ministry</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Account Number:</span>
+                      <span className="font-medium text-gray-900">0057469027</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-church-600 mt-3 italic">
+                    Please use your name as the transaction reference.
+                  </p>
+                </div>
+              )}
+
+              <button 
+                onClick={handleGive}
+                className="w-full bg-church-600 text-white py-3 rounded-xl font-bold hover:bg-church-700 transition shadow-lg mt-4"
+              >
+                {paymentMethod === 'bank' ? 'I Have Made the Transfer' : 'Process Payment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -387,13 +507,14 @@ const MemberPortal: React.FC = () => {
           <div className="w-full md:w-72 flex-shrink-0 animate-fade-in-up">
             <div className="glass-panel rounded-2xl shadow-sm p-6 mb-6 sticky top-24">
               <div className="flex flex-col items-center text-center mb-8">
-                <img src={user.avatarUrl} alt="Profile" className="w-24 h-24 rounded-full border-4 border-white shadow-md mb-4 object-cover" />
+                <img src={user.avatarUrl} alt="Profile" className="w-24 h-24 rounded-full border-4 border-white shadow-md mb-4 object-cover" referrerPolicy="no-referrer" />
                 <h2 className="font-bold text-gray-900 text-xl font-serif">{user.firstName} {user.lastName}</h2>
                 <p className="text-xs text-church-500 uppercase tracking-widest font-bold mt-1 bg-church-50 px-3 py-1 rounded-full">{user.role}</p>
               </div>
               <nav className="space-y-1.5">
                 {[
                     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+                    { id: 'community', label: 'Community', icon: Users },
                     { id: 'profile', label: 'Profile', icon: User },
                     { id: 'wallet', label: 'Wallet', icon: CreditCard },
                     { id: 'messages', label: 'Inbox', icon: MessageSquare },
@@ -418,6 +539,7 @@ const MemberPortal: React.FC = () => {
           </div>
           <div className="flex-1">
             {activeTab === 'dashboard' && renderDashboard()}
+            {activeTab === 'community' && <Community />}
             {activeTab === 'profile' && renderProfile()}
             {activeTab === 'wallet' && renderWallet()}
             {activeTab === 'messages' && renderMessages()}

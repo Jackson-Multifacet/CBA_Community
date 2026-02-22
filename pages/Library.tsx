@@ -5,10 +5,12 @@ import { Link } from 'react-router-dom';
 import { Book } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { useCurrency } from '../context/CurrencyContext';
 
 const Library: React.FC = () => {
   const { user } = useAuth();
   const { books } = useData();
+  const { formatAmount } = useCurrency();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [isBuying, setIsBuying] = useState(false);
@@ -104,7 +106,7 @@ const Library: React.FC = () => {
                                         <BookOpen size={12} /> Purchased
                                     </span>
                                 ) : (
-                                    <span className="text-church-900 font-bold">${book.price.toFixed(2)}</span>
+                                    <span className="text-church-900 font-bold">{formatAmount(book.price)}</span>
                                 )}
                             </div>
                         </div>
@@ -165,7 +167,7 @@ const Library: React.FC = () => {
                                 <div className="bg-gray-50 p-4 rounded-2xl mb-6 border border-gray-100">
                                     <div className="flex justify-between items-center text-sm font-bold">
                                         <span className="text-gray-500">Price</span>
-                                        <span className="text-2xl text-church-900">${selectedBook.price.toFixed(2)}</span>
+                                        <span className="text-2xl text-church-900">{formatAmount(selectedBook.price)}</span>
                                     </div>
                                 </div>
 

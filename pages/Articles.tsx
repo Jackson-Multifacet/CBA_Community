@@ -69,7 +69,7 @@ const Articles: React.FC = () => {
                     className="group flex flex-col bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-gray-100"
                   >
                       <div className="aspect-[16/9] overflow-hidden relative">
-                          <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-700" />
+                          <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-700" referrerPolicy="no-referrer" />
                           <div className="absolute top-4 left-4">
                              <span className="bg-white/90 backdrop-blur text-church-800 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">
                                {article.category}

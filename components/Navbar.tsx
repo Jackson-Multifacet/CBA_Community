@@ -103,9 +103,13 @@ const Navbar: React.FC = () => {
                   </Link>
               )}
              
-              <button className="bg-gradient-to-r from-church-600 to-church-500 text-white px-5 py-2 rounded-full font-medium hover:shadow-lg hover:scale-105 transition-all duration-300 text-sm shadow-church-200/50 shadow-md">
+              <Link 
+                to="/portal" 
+                state={{ tab: 'wallet' }}
+                className="bg-gradient-to-r from-church-600 to-church-500 text-white px-5 py-2 rounded-full font-medium hover:shadow-lg hover:scale-105 transition-all duration-300 text-sm shadow-church-200/50 shadow-md"
+              >
                 Give Online
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -173,9 +177,14 @@ const Navbar: React.FC = () => {
             )}
            
             <div className="pt-2">
-              <button className="w-full bg-church-600 text-white px-5 py-3 rounded-lg font-medium hover:bg-church-700 shadow-lg shadow-church-200/50">
+              <Link 
+                to="/portal" 
+                state={{ tab: 'wallet' }}
+                onClick={() => setIsOpen(false)}
+                className="block w-full text-center bg-church-600 text-white px-5 py-3 rounded-lg font-medium hover:bg-church-700 shadow-lg shadow-church-200/50"
+              >
                 Give Online
-              </button>
+              </Link>
             </div>
           </div>
         </div>

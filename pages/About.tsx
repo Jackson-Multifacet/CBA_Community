@@ -56,9 +56,10 @@ const About: React.FC = () => {
             <div className="group">
               <div className="aspect-[3/4] overflow-hidden rounded-lg mb-4 bg-gray-200">
                 <img 
-                  src="https://picsum.photos/400/500?random=1" 
+                  src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80" 
                   alt="Senior Pastor" 
                   className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                  referrerPolicy="no-referrer"
                 />
               </div>
               <h3 className="text-xl font-bold text-gray-900">Rev. Michael Thomas</h3>
@@ -71,9 +72,10 @@ const About: React.FC = () => {
             <div className="group">
               <div className="aspect-[3/4] overflow-hidden rounded-lg mb-4 bg-gray-200">
                 <img 
-                  src="https://picsum.photos/400/500?random=2" 
+                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80" 
                   alt="Associate Pastor" 
                   className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                  referrerPolicy="no-referrer"
                 />
               </div>
               <h3 className="text-xl font-bold text-gray-900">Pastor Sarah Jenkins</h3>
@@ -86,9 +88,10 @@ const About: React.FC = () => {
             <div className="group">
               <div className="aspect-[3/4] overflow-hidden rounded-lg mb-4 bg-gray-200">
                 <img 
-                  src="https://picsum.photos/400/500?random=3" 
+                  src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=400&q=80" 
                   alt="Youth Pastor" 
                   className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                  referrerPolicy="no-referrer"
                 />
               </div>
               <h3 className="text-xl font-bold text-gray-900">David Ross</h3>

@@ -13,7 +13,7 @@ const Home: React.FC = () => {
         <div 
           className="absolute inset-0 bg-cover bg-center z-0 animate-scale-in" 
           style={{ 
-            backgroundImage: 'url("https://picsum.photos/1920/1080?grayscale&blur=2")',
+            backgroundImage: 'url("https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=1920&q=80")',
             animationDuration: '10s' 
           }}
         />
@@ -80,9 +80,10 @@ const Home: React.FC = () => {
           <div className="md:w-1/2 relative group">
             <div className="absolute -inset-4 bg-gradient-to-r from-gold-500 to-church-600 rounded-2xl opacity-20 group-hover:opacity-30 blur-lg transition duration-500"></div>
             <img 
-              src="https://picsum.photos/800/600" 
+              src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=800&q=80" 
               alt="Congregation worshipping" 
               className="relative rounded-2xl shadow-2xl transform transition duration-500 group-hover:-translate-y-2 object-cover"
+              referrerPolicy="no-referrer"
             />
           </div>
           <div className="md:w-1/2">
@@ -118,7 +119,7 @@ const Home: React.FC = () => {
 
           <div className="glass-panel rounded-2xl overflow-hidden shadow-xl flex flex-col md:flex-row group hover:shadow-2xl transition-all duration-500">
             <div className="md:w-2/5 h-64 md:h-auto bg-gray-200 relative overflow-hidden">
-               <img src="https://picsum.photos/600/400" alt="Sermon thumbnail" className="absolute inset-0 w-full h-full object-cover transition duration-700 group-hover:scale-110"/>
+               <img src="https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&w=600&q=80" alt="Sermon thumbnail" className="absolute inset-0 w-full h-full object-cover transition duration-700 group-hover:scale-110" referrerPolicy="no-referrer"/>
                <div className="absolute inset-0 bg-church-900/30 group-hover:bg-church-900/40 transition duration-300"></div>
                <div className="absolute inset-0 flex items-center justify-center">
                   <div className="bg-white/20 backdrop-blur-md rounded-full p-4 transform scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition duration-500">

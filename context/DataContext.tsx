@@ -1,9 +1,12 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Sermon, Event, Article, GalleryItem, Book } from '../types';
+import { io, Socket } from 'socket.io-client';
+import { toast } from 'sonner';
+import { Sermon, Event, Article, GalleryItem, Book, Post, DirectMessage, Member, Comment } from '../types';
 import { ARTICLES as INITIAL_ARTICLES } from '../data/articles';
 import { API_BASE_URL } from '../src/config';
 
+// ... (keep initial data constants for Sermons, Gallery)
 // Initial Mock Data for Sermons
 const INITIAL_SERMONS: Sermon[] = [
     {
@@ -41,33 +44,16 @@ const INITIAL_SERMONS: Sermon[] = [
     },
 ];
 
-// Initial Mock Data for Events (Fallback)
-const INITIAL_EVENTS: Event[] = [
-    {
-      id: 'ot-2026',
-      title: 'The Old Testament In 3 Months',
-      date: 'March 1, 2026',
-      time: 'Ongoing (Daily)',
-      location: 'Global / In-App',
-      description: 'Join the entire Christ Believers Assembly family for a transformative 90-day journey through the foundations of our faith.',
-      category: 'Program',
-      featured: true,
-      isRegistered: true 
-    }
-];
-
 // Initial Mock Data for Gallery
 const INITIAL_GALLERY: GalleryItem[] = [
-  { id: 'g1', type: 'image', category: 'Story', title: 'Sunday Worship', date: '2023-10-29', url: 'https://picsum.photos/400/800?random=g1' },
-  { id: 'g2', type: 'image', category: 'Story', title: 'Youth Hangout', date: '2023-10-28', url: 'https://picsum.photos/400/800?random=g2' },
-  { id: 'g3', type: 'image', category: 'Story', title: 'Bible Study', date: '2023-10-25', url: 'https://picsum.photos/400/800?random=g3' },
-  { id: 'g4', type: 'image', category: 'Reel', title: 'Worship Highlights', date: '2023-10-29', url: 'https://picsum.photos/400/700?random=g4', likes: 120 },
-  { id: 'g5', type: 'image', category: 'Reel', title: 'Pastor\'s Recap', date: '2023-10-24', url: 'https://picsum.photos/400/700?random=g5', likes: 85 },
-  { id: 'g6', type: 'image', category: 'Service', title: 'Choir Ministration', date: '2023-10-22', url: 'https://picsum.photos/800/600?random=g6' },
-  { id: 'g7', type: 'image', category: 'Event', title: 'Community Outreach', date: '2023-10-15', url: 'https://picsum.photos/800/600?random=g7' },
+  { id: 'g1', type: 'image', category: 'Story', title: 'Sunday Worship', date: '2023-10-29', url: 'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=400&q=80' },
+  { id: 'g2', type: 'image', category: 'Story', title: 'Youth Hangout', date: '2023-10-28', url: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=400&q=80' },
+  { id: 'g3', type: 'image', category: 'Story', title: 'Bible Study', date: '2023-10-25', url: 'https://images.unsplash.com/photo-1445633629932-0029acc44e88?auto=format&fit=crop&w=400&q=80' },
+  { id: 'g4', type: 'image', category: 'Reel', title: 'Worship Highlights', date: '2023-10-29', url: 'https://images.unsplash.com/photo-1507692049790-de58293a469d?auto=format&fit=crop&w=400&q=80', likes: 120 },
+  { id: 'g5', type: 'image', category: 'Reel', title: 'Pastor\'s Recap', date: '2023-10-24', url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80', likes: 85 },
+  { id: 'g6', type: 'image', category: 'Service', title: 'Choir Ministration', date: '2023-10-22', url: 'https://images.unsplash.com/photo-1516280440614-6697288d5d38?auto=format&fit=crop&w=800&q=80' },
+  { id: 'g7', type: 'image', category: 'Event', title: 'Community Outreach', date: '2023-10-15', url: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=800&q=80' },
 ];
-
-const INITIAL_BOOKS: Book[] = [];
 
 interface DataContextType {
   sermons: Sermon[];
@@ -75,6 +61,9 @@ interface DataContextType {
   articles: Article[];
   galleryItems: GalleryItem[];
   books: Book[];
+  posts: Post[];
+  members: Member[];
+  directMessages: DirectMessage[];
   
   // Sermon Actions
   addSermon: (sermon: Sermon) => void;
@@ -99,21 +88,25 @@ interface DataContextType {
   addBook: (book: Book) => void;
   updateBook: (book: Book) => void;
   deleteBook: (id: string) => void;
+
+  // Community Actions
+  addPost: (post: Post | FormData) => Promise<void>;
+  likePost: (postId: string, userId: string) => void;
+  addComment: (postId: string, comment: { authorName: string, text: string }) => Promise<void>;
+  sendDirectMessage: (msg: DirectMessage) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [socket, setSocket] = useState<Socket | null>(null);
+
   const [sermons, setSermons] = useState<Sermon[]>(() => {
     const saved = localStorage.getItem('cba_sermons');
     return saved ? JSON.parse(saved) : INITIAL_SERMONS;
   });
 
-  const [events, setEvents] = useState<Event[]>(() => {
-    const saved = localStorage.getItem('cba_events');
-    return saved ? JSON.parse(saved) : INITIAL_EVENTS;
-  });
-
+  const [events, setEvents] = useState<Event[]>([]);
   const [articles, setArticles] = useState<Article[]>(() => {
     const saved = localStorage.getItem('cba_articles');
     return saved ? JSON.parse(saved) : INITIAL_ARTICLES;
@@ -124,44 +117,71 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return saved ? JSON.parse(saved) : INITIAL_GALLERY;
   });
 
-  const [books, setBooks] = useState<Book[]>(() => {
-    const saved = localStorage.getItem('cba_books');
-    return saved ? JSON.parse(saved) : INITIAL_BOOKS;
-  });
+  const [books, setBooks] = useState<Book[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [directMessages, setDirectMessages] = useState<DirectMessage[]>([]);
 
   useEffect(() => { localStorage.setItem('cba_sermons', JSON.stringify(sermons)); }, [sermons]);
-  useEffect(() => { localStorage.setItem('cba_events', JSON.stringify(events)); }, [events]);
   useEffect(() => { localStorage.setItem('cba_articles', JSON.stringify(articles)); }, [articles]);
   useEffect(() => { localStorage.setItem('cba_gallery', JSON.stringify(galleryItems)); }, [galleryItems]);
-  useEffect(() => { localStorage.setItem('cba_books', JSON.stringify(books)); }, [books]);
 
-  // Fetch Books & Events from Backend
+  // Socket.io Connection
+  useEffect(() => {
+    const newSocket = io(window.location.origin);
+    setSocket(newSocket);
+
+    newSocket.on('connect', () => {
+      console.log('Connected to socket server');
+    });
+
+    newSocket.on('new_post', (post: Post) => {
+      setPosts(prev => [post, ...prev]);
+      toast.success(`New post from ${post.authorName}`);
+    });
+
+    newSocket.on('update_post', (updatedPost: Post) => {
+      setPosts(prev => prev.map(p => p.id === updatedPost.id ? updatedPost : p));
+    });
+
+    newSocket.on('new_message', (msg: DirectMessage) => {
+      setDirectMessages(prev => [...prev, msg]);
+      // Only toast if it's for me (in a real app check receiverId)
+      // For now, we just show it
+      toast.info(`New message from ${msg.senderId}`);
+    });
+
+    return () => {
+      newSocket.close();
+    };
+  }, []);
+
+  // Fetch Backend Data
   useEffect(() => {
     const fetchBackendData = async () => {
       try {
         // Fetch Books
         const booksRes = await fetch(`${API_BASE_URL}/books`);
-        if (booksRes.ok) {
-          const data = await booksRes.json();
-          const formattedData = data.map((b: any) => ({ ...b, id: b._id || b.id }));
-          setBooks(formattedData);
-        }
+        if (booksRes.ok) setBooks(await booksRes.json());
 
         // Fetch Events
         const eventsRes = await fetch(`${API_BASE_URL}/events`);
-        if (eventsRes.ok) {
-            const data = await eventsRes.json();
-            const formattedEvents = data.map((e: any) => ({ ...e, id: e._id || e.id }));
-            if (formattedEvents.length > 0) {
-                setEvents(prev => {
-                    // Merge remote events with initial "OT Challenge" hardcoded event if needed
-                    const hasOt = formattedEvents.find((e:Event) => e.id === 'ot-2026');
-                    return hasOt ? formattedEvents : [...formattedEvents, INITIAL_EVENTS[0]];
-                });
-            }
-        }
+        if (eventsRes.ok) setEvents(await eventsRes.json());
+
+        // Fetch Posts
+        const postsRes = await fetch(`${API_BASE_URL}/posts`);
+        if (postsRes.ok) setPosts(await postsRes.json());
+
+        // Fetch Members
+        const membersRes = await fetch(`${API_BASE_URL}/users`);
+        if (membersRes.ok) setMembers(await membersRes.json());
+
+        // Fetch Messages
+        const messagesRes = await fetch(`${API_BASE_URL}/messages`);
+        if (messagesRes.ok) setDirectMessages(await messagesRes.json());
+
       } catch (error) {
-        console.log('Backend not connected, using local data');
+        console.log('Backend not fully connected, using some local data');
       }
     };
     fetchBackendData();
@@ -175,38 +195,40 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Event Actions (Backend Connected)
   const addEvent = async (item: Event) => {
-    setEvents(prev => [item, ...prev]);
     try {
-        const token = localStorage.getItem('token');
-        await fetch(`${API_BASE_URL}/events`, {
+        const res = await fetch(`${API_BASE_URL}/events`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'x-auth-token': token || '' },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(item)
         });
+        if (res.ok) {
+            const newEvent = await res.json();
+            setEvents(prev => [newEvent, ...prev]);
+            toast.success('Event created successfully');
+        }
     } catch (e) { console.error("API Error", e); }
   };
   
   const updateEvent = async (item: Event) => {
     setEvents(prev => prev.map(i => i.id === item.id ? item : i));
     try {
-        const token = localStorage.getItem('token');
         await fetch(`${API_BASE_URL}/events/${item.id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'x-auth-token': token || '' },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(item)
         });
+        toast.success('Event updated');
     } catch (e) { console.error("API Error", e); }
   };
 
   const deleteEvent = async (id: string) => {
-    setEvents(prev => prev.filter(i => i.id !== id));
-    try {
-        const token = localStorage.getItem('token');
+     setEvents(prev => prev.filter(i => i.id !== id));
+     try {
         await fetch(`${API_BASE_URL}/events/${id}`, {
-            method: 'DELETE',
-            headers: { 'x-auth-token': token || '' }
+            method: 'DELETE'
         });
-    } catch (e) { console.error("API Error", e); }
+        toast.success('Event deleted');
+     } catch (e) { console.error("API Error", e); }
   };
 
   const addArticle = (item: Article) => setArticles(prev => [item, ...prev]);
@@ -218,60 +240,106 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Book Actions with API Sync
   const addBook = async (item: Book) => {
-    setBooks(prev => [item, ...prev]);
     try {
-      const token = localStorage.getItem('token');
-      await fetch(`${API_BASE_URL}/books`, {
+      const res = await fetch(`${API_BASE_URL}/books`, {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-auth-token': token || '' 
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(item)
       });
+      if (res.ok) {
+          const newBook = await res.json();
+          setBooks(prev => [newBook, ...prev]);
+          toast.success('Book added successfully');
+      }
     } catch (err) {
       console.error("Failed to save book to backend", err);
     }
   };
 
   const updateBook = async (item: Book) => {
-    setBooks(prev => prev.map(i => i.id === item.id ? item : i));
-    try {
-      const token = localStorage.getItem('token');
-      await fetch(`${API_BASE_URL}/books/${item.id}`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'x-auth-token': token || '' 
-        },
-        body: JSON.stringify(item)
-      });
-    } catch (err) {
-      console.error("Failed to update book", err);
-    }
+     setBooks(prev => prev.map(i => i.id === item.id ? item : i));
+     try {
+        await fetch(`${API_BASE_URL}/books/${item.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(item)
+        });
+        toast.success('Book updated');
+     } catch (e) { console.error("API Error", e); }
   };
 
   const deleteBook = async (id: string) => {
-    setBooks(prev => prev.filter(i => i.id !== id));
-    try {
-      const token = localStorage.getItem('token');
-      await fetch(`${API_BASE_URL}/books/${id}`, {
-        method: 'DELETE',
-        headers: { 'x-auth-token': token || '' }
-      });
-    } catch (err) {
-      console.error("Failed to delete book", err);
+     setBooks(prev => prev.filter(i => i.id !== id));
+     try {
+        await fetch(`${API_BASE_URL}/books/${id}`, {
+            method: 'DELETE'
+        });
+        toast.success('Book deleted');
+     } catch (e) { console.error("API Error", e); }
+  };
+
+  // Community Actions
+  const addPost = async (postData: Post | FormData) => {
+    if (postData instanceof FormData) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/posts`, {
+          method: 'POST',
+          body: postData
+        });
+        if (res.ok) {
+          toast.success('Post published!');
+          // Socket will handle the update
+        }
+      } catch (e) { 
+          console.error("Failed to post", e); 
+          toast.error('Failed to publish post');
+      }
     }
+  };
+  
+  const likePost = async (postId: string, userId: string) => {
+    try {
+        await fetch(`${API_BASE_URL}/posts/${postId}/like`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId })
+        });
+    } catch (e) { console.error("Failed to like post", e); }
+  };
+
+  const addComment = async (postId: string, comment: { authorName: string, text: string }) => {
+    try {
+        await fetch(`${API_BASE_URL}/posts/${postId}/comments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(comment)
+        });
+        toast.success('Comment added');
+    } catch (e) { console.error("Failed to add comment", e); }
+  };
+
+  const sendDirectMessage = async (msg: DirectMessage) => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(msg)
+        });
+        if (res.ok) {
+            // Socket will handle update
+        }
+      } catch (e) { console.error("Failed to send message", e); }
   };
 
   return (
     <DataContext.Provider value={{
-      sermons, events, articles, galleryItems, books,
+      sermons, events, articles, galleryItems, books, posts, members, directMessages,
       addSermon, updateSermon, deleteSermon,
       addEvent, updateEvent, deleteEvent,
       addArticle, updateArticle, deleteArticle,
       addGalleryItem, deleteGalleryItem,
-      addBook, updateBook, deleteBook
+      addBook, updateBook, deleteBook,
+      addPost, likePost, addComment, sendDirectMessage
     }}>
       {children}
     </DataContext.Provider>

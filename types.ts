@@ -7,6 +7,7 @@ export interface Sermon {
   passage: string;
   description: string;
   videoUrl?: string;
+  audioUrl?: string;
   duration?: string;
   category: 'Full Service' | 'Nugget' | 'Series';
   tags: string[];
@@ -147,6 +148,36 @@ export interface ChatMessage {
 }
 
 // Bible Study Mode Types
+export interface Comment {
+  id: string;
+  authorName: string;
+  text: string;
+  timestamp: string;
+}
+
+export interface Post {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar: string;
+  content: string;
+  imageUrl?: string;
+  likes: number;
+  comments: number;
+  timestamp: string;
+  likedBy: string[];
+  commentList?: Comment[];
+}
+
+export interface DirectMessage {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  timestamp: string;
+  read: boolean;
+}
+
 export interface BibleVerse {
   book_id: string;
   book_name: string;

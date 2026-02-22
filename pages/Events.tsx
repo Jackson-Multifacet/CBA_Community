@@ -41,7 +41,7 @@ const Events: React.FC = () => {
 
         {/* Featured Challenge Banner */}
         <div className="relative rounded-3xl overflow-hidden mb-16 bg-church-900 text-white shadow-2xl animate-fade-in-up">
-            <div className="absolute inset-0 bg-[url('https://picsum.photos/1200/400?grayscale&blur=2')] opacity-30 bg-cover bg-center"></div>
+            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=1200&q=80')] opacity-30 bg-cover bg-center"></div>
             <div className="absolute inset-0 bg-gradient-to-r from-church-900 via-church-900/80 to-transparent"></div>
             <div className="relative z-10 p-8 md:p-16 flex flex-col md:flex-row items-center gap-12">
                 <div className="flex-1 text-center md:text-left">
@@ -85,7 +85,7 @@ const Events: React.FC = () => {
           {filteredEvents.map((event) => (
             <div key={event.id} className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-xl transition-all flex flex-col group">
               <div className="h-48 bg-gray-200 relative overflow-hidden">
-                <img src={`https://picsum.photos/600/400?random=${event.id}`} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                <img src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=600&q=80" alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" referrerPolicy="no-referrer" />
                 <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-church-600 shadow-sm">
                   {event.category}
                 </div>

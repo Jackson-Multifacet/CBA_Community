@@ -50,7 +50,7 @@ const Gallery: React.FC = () => {
              >
                 <div className="w-20 h-20 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 via-red-500 to-purple-600 group-hover:scale-105 transition-transform duration-300">
                     <div className="w-full h-full rounded-full border-2 border-white overflow-hidden bg-gray-100">
-                        <img src={story.url} alt={story.title} className="w-full h-full object-cover" />
+                        <img src={story.url} alt={story.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     </div>
                 </div>
                 <span className="text-xs font-bold text-gray-700 truncate w-20 text-center">{story.title}</span>
@@ -73,7 +73,7 @@ const Gallery: React.FC = () => {
                         onClick={() => setSelectedItem(reel)}
                         className="aspect-[9/16] rounded-xl overflow-hidden relative group cursor-pointer shadow-md bg-gray-900"
                     >
-                        <img src={reel.url} alt={reel.title} className="w-full h-full object-cover group-hover:scale-110 transition duration-500 opacity-90" />
+                        <img src={reel.url} alt={reel.title} className="w-full h-full object-cover group-hover:scale-110 transition duration-500 opacity-90" referrerPolicy="no-referrer" />
                         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition"></div>
                         <div className="absolute bottom-4 left-4 text-white">
                             <p className="font-bold text-sm text-shadow flex items-center gap-1"><Play size={12} fill="currentColor" /> {reel.likes || 0}</p>
@@ -121,7 +121,7 @@ const Gallery: React.FC = () => {
                         className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 cursor-pointer"
                     >
                         <div className="aspect-[4/3] overflow-hidden relative bg-gray-200">
-                             <img src={item.url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-700" />
+                             <img src={item.url} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-700" referrerPolicy="no-referrer" />
                              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-church-600 shadow-sm">
                                 {item.category}
                              </div>
@@ -148,7 +148,7 @@ const Gallery: React.FC = () => {
               <div className="relative h-full max-h-[85vh] aspect-[9/16] bg-gray-900 rounded-xl overflow-hidden shadow-2xl">
                   <div className="absolute top-0 left-0 w-full p-4 bg-gradient-to-b from-black/60 to-transparent z-10 flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
-                           <img src={activeStory.url} className="w-full h-full object-cover" />
+                           <img src={activeStory.url} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       </div>
                       <span className="text-white font-bold text-sm shadow-black drop-shadow-md">{activeStory.title}</span>
                       <span className="text-white/60 text-xs ml-auto">{activeStory.date}</span>
@@ -159,7 +159,7 @@ const Gallery: React.FC = () => {
                       <div className="h-full bg-white w-full animate-[width_5s_linear]"></div>
                   </div>
 
-                  <img src={activeStory.url} alt={activeStory.title} className="w-full h-full object-cover" />
+                  <img src={activeStory.url} alt={activeStory.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               </div>
           </div>
       )}
@@ -175,7 +175,7 @@ const Gallery: React.FC = () => {
               </button>
               <div className="max-w-5xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[90vh]">
                   <div className="md:w-2/3 bg-black flex items-center justify-center relative">
-                      <img src={selectedItem.url} alt={selectedItem.title} className="max-w-full max-h-full object-contain" />
+                      <img src={selectedItem.url} alt={selectedItem.title} className="max-w-full max-h-full object-contain" referrerPolicy="no-referrer" />
                   </div>
                   <div className="md:w-1/3 p-6 flex flex-col bg-white">
                       <div className="flex items-center gap-3 mb-6">

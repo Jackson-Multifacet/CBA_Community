@@ -29,7 +29,7 @@ const Login: React.FC = () => {
   return (
     <div className="min-h-screen pt-20 pb-12 flex items-center justify-center relative overflow-hidden">
         {/* Background Elements */}
-        <div className="absolute inset-0 bg-cover bg-center z-0" style={{ backgroundImage: 'url("https://picsum.photos/1920/1080?grayscale&blur=2")' }} />
+        <div className="absolute inset-0 bg-cover bg-center z-0" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=1920&q=80")' }} />
         <div className="absolute inset-0 bg-gradient-to-tr from-church-900/90 to-church-800/80 z-10" />
 
         <div className="relative z-20 w-full max-w-md px-4 animate-fade-in-up">

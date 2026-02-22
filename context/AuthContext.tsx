@@ -66,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             firstName: 'Joshua',
             lastName: 'Davidson',
             email: 'joshua.d@example.com',
-            avatarUrl: 'https://picsum.photos/200/200?random=user',
+            avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&q=80',
             memberSince: '2019',
             role: 'Member',
             parish: 'Grace City Main',

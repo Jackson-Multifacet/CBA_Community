@@ -283,6 +283,24 @@ const Contact: React.FC = () => {
           </div>
         )}
       </div>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 border-t border-gray-100">
+        <h2 className="text-3xl font-serif font-bold text-gray-900 mb-8 text-center">Frequently Asked Questions</h2>
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h3 className="font-bold text-gray-900 text-lg mb-2">What are your service times?</h3>
+            <p className="text-gray-600">We hold Sunday services at 8:00 AM and 10:00 AM. Our mid-week service is on Wednesdays at 6:00 PM.</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h3 className="font-bold text-gray-900 text-lg mb-2">How can I get involved?</h3>
+            <p className="text-gray-600">You can join a department or volunteer group by speaking with our ushers after any service, or by filling out the contact form above with the topic "Events" or "General Inquiry".</p>
+          </div>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h3 className="font-bold text-gray-900 text-lg mb-2">Do you have online services?</h3>
+            <p className="text-gray-600">Yes! We stream our Sunday services live on our Facebook page and YouTube channel.</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

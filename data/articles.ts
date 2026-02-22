@@ -9,7 +9,7 @@ export const ARTICLES: Article[] = [
     date: 'Oct 28, 2023',
     readTime: '6 min',
     category: 'Faith',
-    imageUrl: 'https://picsum.photos/800/400?random=a1',
+    imageUrl: 'https://images.unsplash.com/photo-1507692049790-de58293a469d?auto=format&fit=crop&w=800&q=80',
     content: `
       <p>There are times in our spiritual walk where God seems silent. We pray, but the heavens feel like brass. We read the Word, but the verses don't seem to leap off the page as they once did. These are the wilderness seasons.</p>
       
@@ -35,7 +35,7 @@ export const ARTICLES: Article[] = [
     date: 'Oct 20, 2023',
     readTime: '8 min',
     category: 'Family',
-    imageUrl: 'https://picsum.photos/800/400?random=a2',
+    imageUrl: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=800&q=80',
     content: `
       <p>Marriage is often described as a contract in our modern world—an agreement between two parties based on mutual benefit. However, the biblical view of marriage is a covenant, a binding promise that reflects the relationship between Christ and His Church.</p>
 
@@ -54,7 +54,7 @@ export const ARTICLES: Article[] = [
     date: 'Oct 12, 2023',
     readTime: '5 min',
     category: 'Spiritual Growth',
-    imageUrl: 'https://picsum.photos/800/400?random=a3',
+    imageUrl: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=800&q=80',
     content: `
       <p>In a culture of instant gratification, fasting is a radical act of rebellion against the flesh. It is a voluntary denial of a physical necessity to pursue a spiritual urgency.</p>
 

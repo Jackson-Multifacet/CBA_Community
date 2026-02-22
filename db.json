@@ -1,0 +1,56 @@
+{
+  "posts": [],
+  "events": [
+    {
+      "id": "ot-2026",
+      "title": "The Old Testament In 3 Months",
+      "date": "March 1, 2026",
+      "time": "Ongoing (Daily)",
+      "location": "Global / In-App",
+      "description": "Join the entire Christ Believers Assembly family for a transformative 90-day journey through the foundations of our faith.",
+      "category": "Program",
+      "featured": true,
+      "isRegistered": true
+    }
+  ],
+  "books": [],
+  "messages": [
+    {
+        "id": "msg1",
+        "senderId": "m1",
+        "receiverId": "M-1023",
+        "content": "Hi! Are you coming to the prayer meeting?",
+        "timestamp": "2023-11-01T10:30:00Z",
+        "read": false
+    }
+  ],
+  "users": [
+    {
+        "id": "m1",
+        "firstName": "Sarah",
+        "lastName": "Jenkins",
+        "email": "sarah@example.com",
+        "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80",
+        "memberSince": "2020",
+        "role": "Leader"
+    },
+    {
+        "id": "m2",
+        "firstName": "David",
+        "lastName": "Ross",
+        "email": "david@example.com",
+        "avatarUrl": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80",
+        "memberSince": "2021",
+        "role": "Member"
+    },
+    {
+        "id": "m3",
+        "firstName": "Michael",
+        "lastName": "Thomas",
+        "email": "michael@example.com",
+        "avatarUrl": "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=200&q=80",
+        "memberSince": "2018",
+        "role": "Pastor"
+    }
+  ]
+}

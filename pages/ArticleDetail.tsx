@@ -67,7 +67,7 @@ const ArticleDetail: React.FC = () => {
     <div className="bg-white min-h-screen pb-20">
       {/* Hero Image */}
       <div className="h-[400px] md:h-[500px] relative w-full">
-        <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover" />
+        <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent opacity-90"></div>
         
         <div className="absolute top-0 left-0 p-6">
@@ -214,7 +214,7 @@ const ArticleDetail: React.FC = () => {
                        {articles.filter(a => a.id !== id).slice(0, 3).map(a => (
                            <Link to={`/articles/${a.id}`} key={a.id} className="flex gap-3 group">
                                <div className="w-16 h-16 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
-                                   <img src={a.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
+                                   <img src={a.imageUrl} alt="" className="w-full h-full object-cover group-hover:scale-110 transition duration-500" referrerPolicy="no-referrer" />
                                </div>
                                <div>
                                    <h5 className="font-bold text-gray-800 text-sm leading-tight mb-1 group-hover:text-church-600 transition">{a.title}</h5>
