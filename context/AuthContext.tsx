@@ -1,10 +1,19 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Member } from '../types';
+import { auth, db } from '../src/firebase';
+import { 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged,
+  User 
+} from 'firebase/auth';
+import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: Member | null;
-  login: (email: string) => Promise<void>;
-  signup: (memberData: Omit<Member, 'id' | 'memberSince' | 'avatarUrl'>) => Promise<void>;
+  login: (email: string, password?: string) => Promise<void>;
+  signup: (memberData: Omit<Member, 'id' | 'memberSince' | 'avatarUrl'> & { password?: string }) => Promise<void>;
   updateProfile: (updatedData: Partial<Member>) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
@@ -26,13 +35,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return saved ? JSON.parse(saved) : ['Grace City Main', 'North Campus', 'Online Campus'];
   });
 
-  // Load user from local storage on mount
+  // Listen to Firebase Auth state changes
   useEffect(() => {
-    const storedUser = localStorage.getItem('cba_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: User | null) => {
+      if (firebaseUser) {
+        // Fetch the extended user profile from Firestore
+        try {
+          const docRef = doc(db, 'users', firebaseUser.uid);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            setUser({ id: firebaseUser.uid, ...docSnap.data() } as Member);
+          } else {
+            console.warn("No user profile found in Firestore for:", firebaseUser.uid);
+            setUser(null);
+          }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const addCampus = (campusName: string) => {
@@ -41,78 +69,76 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('cba_campuses', JSON.stringify(updatedCampuses));
   };
 
-  const login = async (email: string) => {
+  const login = async (email: string, password?: string) => {
     setIsLoading(true);
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // In a real app, this would validate password. 
-    // Here we check if a user exists in localStorage "database" or create a mock one if email matches the demo.
-    const storedUser = localStorage.getItem('cba_user');
-    
-    if (storedUser) {
-        const parsed = JSON.parse(storedUser);
-        if(parsed.email === email) {
-            setUser(parsed);
-            setIsLoading(false);
-            return;
-        }
+    try {
+      if (!password) {
+          throw new Error("Password is required for login.");
+      }
+      await signInWithEmailAndPassword(auth, email, password);
+      // State is handled by onAuthStateChanged
+    } catch (error) {
+      setIsLoading(false);
+      throw error;
     }
-
-    // Fallback mock login for demo purposes if no custom signup exists
-    if (email === 'joshua.d@example.com') {
-        const mockUser: Member = {
-            id: 'M-1023',
-            firstName: 'Joshua',
-            lastName: 'Davidson',
-            email: 'joshua.d@example.com',
-            avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&q=80',
-            memberSince: '2019',
-            role: 'Member',
-            parish: 'Grace City Main',
-            phoneNumber: '(555) 123-4567',
-            spiritualInfo: { isBaptized: true, ministryInterests: ['Worship'] }
-        };
-        setUser(mockUser);
-        localStorage.setItem('cba_user', JSON.stringify(mockUser));
-    } else {
-        // If trying to login with an email that doesn't exist and hasn't signed up
-        throw new Error("User not found. Please sign up.");
-    }
-    setIsLoading(false);
   };
 
-  const signup = async (memberData: Omit<Member, 'id' | 'memberSince' | 'avatarUrl'>) => {
+  const signup = async (memberData: Omit<Member, 'id' | 'memberSince' | 'avatarUrl'> & { password?: string }) => {
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      if (!memberData.password) {
+         throw new Error("Password is required for signup");
+      }
+      
+      // 1. Create the user in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, memberData.email, memberData.password);
+      const firebaseUser = userCredential.user;
 
-    const newUser: Member = {
-      ...memberData,
-      id: `M-${Math.floor(Math.random() * 10000)}`,
-      memberSince: new Date().getFullYear().toString(),
-      avatarUrl: `https://ui-avatars.com/api/?name=${memberData.firstName}+${memberData.lastName}&background=random`,
-    };
+      // 2. Prepare the extended member profile
+      const { password, ...restOfUserData } = memberData;
+      
+      const newUserProfile = {
+        ...restOfUserData,
+        memberSince: new Date().getFullYear().toString(),
+        avatarUrl: `https://ui-avatars.com/api/?name=${memberData.firstName}+${memberData.lastName}&background=random`,
+      };
 
-    setUser(newUser);
-    localStorage.setItem('cba_user', JSON.stringify(newUser));
-    setIsLoading(false);
+      // 3. Save the profile to Firestore using the Auth UID as the document ID
+      const userRef = doc(db, 'users', firebaseUser.uid);
+      await setDoc(userRef, newUserProfile);
+      
+      // State updates automatically via onAuthStateChanged, but we'll set it here to be immediate
+      setUser({ id: firebaseUser.uid, ...newUserProfile } as Member);
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+      throw error;
+    }
   };
 
   const updateProfile = async (updatedData: Partial<Member>) => {
+    if (!user) return;
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    if (user) {
-        const updatedUser = { ...user, ...updatedData };
-        setUser(updatedUser);
-        localStorage.setItem('cba_user', JSON.stringify(updatedUser));
+    try {
+      const userRef = doc(db, 'users', user.id);
+      await updateDoc(userRef, updatedData);
+      
+      // Optimistically update local state
+      setUser({ ...user, ...updatedData });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('cba_user');
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+       console.error("Error signing out:", error);
+    }
   };
 
   return (

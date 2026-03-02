@@ -63,7 +63,7 @@ const Signup: React.FC = () => {
     }
     setSubmitting(true);
 
-    const newMember: Omit<Member, 'id' | 'memberSince' | 'avatarUrl'> = {
+    const newMember = {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
@@ -91,14 +91,27 @@ const Signup: React.FC = () => {
             name: formData.emergencyName,
             phone: formData.emergencyPhone,
             relation: formData.emergencyRelation
-        }
+        },
+        password: formData.password
     };
 
     try {
         await signup(newMember);
         navigate('/portal');
-    } catch (error) {
-        console.error(error);
+    } catch (err: any) {
+        console.error(err);
+        const code = err.code || '';
+        let message = 'Failed to create account. Please try again.';
+        if (code === 'auth/email-already-in-use') {
+          message = 'An account with this email already exists. Please sign in instead.';
+        } else if (code === 'auth/invalid-email') {
+          message = 'Please enter a valid email address.';
+        } else if (code === 'auth/weak-password') {
+          message = 'Your password is too weak. Please choose a stronger password (at least 6 characters).';
+        } else if (code === 'auth/network-request-failed') {
+          message = 'Network error. Please check your internet connection.';
+        }
+        alert(message);
     } finally {
         setSubmitting(false);
     }

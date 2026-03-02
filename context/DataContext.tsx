@@ -1,59 +1,22 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { io, Socket } from 'socket.io-client';
 import { toast } from 'sonner';
 import { Sermon, Event, Article, GalleryItem, Book, Post, DirectMessage, Member, Comment } from '../types';
-import { ARTICLES as INITIAL_ARTICLES } from '../data/articles';
-import { API_BASE_URL } from '../src/config';
-
-// ... (keep initial data constants for Sermons, Gallery)
-// Initial Mock Data for Sermons
-const INITIAL_SERMONS: Sermon[] = [
-    {
-      id: 's1',
-      title: 'Walking on Water',
-      preacher: 'Rev. Michael Thomas',
-      date: 'Oct 24, 2023',
-      passage: 'Matthew 14:22-33',
-      description: 'Understanding faith in the midst of life\'s storms.',
-      category: 'Full Service',
-      duration: '55:00',
-      tags: ['Faith', 'Fear', 'Trust'],
-    },
-    {
-      id: 'n1',
-      title: '3 Minutes of Grace',
-      preacher: 'Pastor Sarah Jenkins',
-      date: 'Oct 26, 2023',
-      passage: 'Ephesians 2:8',
-      description: 'A quick nugget on the power of unmerited favor.',
-      category: 'Nugget',
-      duration: '03:15',
-      tags: ['Grace'],
-    },
-    {
-      id: 's2',
-      title: 'The Prodigal Heart',
-      preacher: 'Pastor Sarah Jenkins',
-      date: 'Oct 17, 2023',
-      passage: 'Luke 15:11-32',
-      description: 'God\'s relentless love for those who have wandered away.',
-      category: 'Full Service',
-      duration: '48:30',
-      tags: ['Grace', 'Forgiveness'],
-    },
-];
-
-// Initial Mock Data for Gallery
-const INITIAL_GALLERY: GalleryItem[] = [
-  { id: 'g1', type: 'image', category: 'Story', title: 'Sunday Worship', date: '2023-10-29', url: 'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?auto=format&fit=crop&w=400&q=80' },
-  { id: 'g2', type: 'image', category: 'Story', title: 'Youth Hangout', date: '2023-10-28', url: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=400&q=80' },
-  { id: 'g3', type: 'image', category: 'Story', title: 'Bible Study', date: '2023-10-25', url: 'https://images.unsplash.com/photo-1445633629932-0029acc44e88?auto=format&fit=crop&w=400&q=80' },
-  { id: 'g4', type: 'image', category: 'Reel', title: 'Worship Highlights', date: '2023-10-29', url: 'https://images.unsplash.com/photo-1507692049790-de58293a469d?auto=format&fit=crop&w=400&q=80', likes: 120 },
-  { id: 'g5', type: 'image', category: 'Reel', title: 'Pastor\'s Recap', date: '2023-10-24', url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80', likes: 85 },
-  { id: 'g6', type: 'image', category: 'Service', title: 'Choir Ministration', date: '2023-10-22', url: 'https://images.unsplash.com/photo-1516280440614-6697288d5d38?auto=format&fit=crop&w=800&q=80' },
-  { id: 'g7', type: 'image', category: 'Event', title: 'Community Outreach', date: '2023-10-15', url: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=800&q=80' },
-];
+import { db } from '../src/firebase';
+import { 
+  collection, 
+  onSnapshot, 
+  doc, 
+  setDoc, 
+  updateDoc, 
+  deleteDoc, 
+  query, 
+  orderBy, 
+  addDoc,
+  serverTimestamp,
+  arrayUnion
+} from 'firebase/firestore';
+import { useAuth } from './AuthContext';
 
 interface DataContextType {
   sermons: Sermon[];
@@ -66,268 +29,251 @@ interface DataContextType {
   directMessages: DirectMessage[];
   
   // Sermon Actions
-  addSermon: (sermon: Sermon) => void;
-  updateSermon: (sermon: Sermon) => void;
-  deleteSermon: (id: string) => void;
+  addSermon: (sermon: Sermon) => Promise<void>;
+  updateSermon: (sermon: Sermon) => Promise<void>;
+  deleteSermon: (id: string) => Promise<void>;
 
   // Event Actions
-  addEvent: (event: Event) => void;
-  updateEvent: (event: Event) => void;
-  deleteEvent: (id: string) => void;
+  addEvent: (event: Event) => Promise<void>;
+  updateEvent: (event: Event) => Promise<void>;
+  deleteEvent: (id: string) => Promise<void>;
 
   // Article Actions
-  addArticle: (article: Article) => void;
-  updateArticle: (article: Article) => void;
-  deleteArticle: (id: string) => void;
+  addArticle: (article: Article) => Promise<void>;
+  updateArticle: (article: Article) => Promise<void>;
+  deleteArticle: (id: string) => Promise<void>;
 
   // Gallery Actions
-  addGalleryItem: (item: GalleryItem) => void;
-  deleteGalleryItem: (id: string) => void;
+  addGalleryItem: (item: GalleryItem) => Promise<void>;
+  deleteGalleryItem: (id: string) => Promise<void>;
 
   // Book Actions
-  addBook: (book: Book) => void;
-  updateBook: (book: Book) => void;
-  deleteBook: (id: string) => void;
+  addBook: (book: Book) => Promise<void>;
+  updateBook: (book: Book) => Promise<void>;
+  deleteBook: (id: string) => Promise<void>;
 
   // Community Actions
-  addPost: (post: Post | FormData) => Promise<void>;
-  likePost: (postId: string, userId: string) => void;
+  addPost: (post: Omit<Post, 'id' | 'timestamp' | 'likes' | 'comments' | 'likedBy'>) => Promise<void>;
+  likePost: (postId: string, userId: string) => Promise<void>;
   addComment: (postId: string, comment: { authorName: string, text: string }) => Promise<void>;
-  sendDirectMessage: (msg: DirectMessage) => Promise<void>;
+  sendDirectMessage: (msg: Omit<DirectMessage, 'id' | 'timestamp' | 'read'>) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [socket, setSocket] = useState<Socket | null>(null);
-
-  const [sermons, setSermons] = useState<Sermon[]>(() => {
-    const saved = localStorage.getItem('cba_sermons');
-    return saved ? JSON.parse(saved) : INITIAL_SERMONS;
-  });
-
+  const { user } = useAuth();
+  
+  const [sermons, setSermons] = useState<Sermon[]>([]);
   const [events, setEvents] = useState<Event[]>([]);
-  const [articles, setArticles] = useState<Article[]>(() => {
-    const saved = localStorage.getItem('cba_articles');
-    return saved ? JSON.parse(saved) : INITIAL_ARTICLES;
-  });
-
-  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>(() => {
-    const saved = localStorage.getItem('cba_gallery');
-    return saved ? JSON.parse(saved) : INITIAL_GALLERY;
-  });
-
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [directMessages, setDirectMessages] = useState<DirectMessage[]>([]);
 
-  useEffect(() => { localStorage.setItem('cba_sermons', JSON.stringify(sermons)); }, [sermons]);
-  useEffect(() => { localStorage.setItem('cba_articles', JSON.stringify(articles)); }, [articles]);
-  useEffect(() => { localStorage.setItem('cba_gallery', JSON.stringify(galleryItems)); }, [galleryItems]);
-
-  // Socket.io Connection
+  // Setup Real-time Listeners for all collections
   useEffect(() => {
-    const newSocket = io(window.location.origin);
-    setSocket(newSocket);
+    // 1. Sermons
+    const qSermons = query(collection(db, 'sermons'));
+    const unsubSermons = onSnapshot(qSermons, (snapshot) => {
+      setSermons(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sermon)));
+    }, (error) => console.error("Error fetching sermons:", error));
 
-    newSocket.on('connect', () => {
-      console.log('Connected to socket server');
-    });
+    // 2. Events
+    const qEvents = query(collection(db, 'events'));
+    const unsubEvents = onSnapshot(qEvents, (snapshot) => {
+      setEvents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event)));
+    }, (error) => console.error("Error fetching events:", error));
 
-    newSocket.on('new_post', (post: Post) => {
-      setPosts(prev => [post, ...prev]);
-      toast.success(`New post from ${post.authorName}`);
-    });
+    // 3. Articles
+    const qArticles = query(collection(db, 'articles'));
+    const unsubArticles = onSnapshot(qArticles, (snapshot) => {
+      setArticles(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Article)));
+    }, (error) => console.error("Error fetching articles:", error));
 
-    newSocket.on('update_post', (updatedPost: Post) => {
-      setPosts(prev => prev.map(p => p.id === updatedPost.id ? updatedPost : p));
-    });
+    // 4. Gallery
+    const qGallery = query(collection(db, 'gallery'));
+    const unsubGallery = onSnapshot(qGallery, (snapshot) => {
+      setGalleryItems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GalleryItem)));
+    }, (error) => console.error("Error fetching gallery:", error));
 
-    newSocket.on('new_message', (msg: DirectMessage) => {
-      setDirectMessages(prev => [...prev, msg]);
-      // Only toast if it's for me (in a real app check receiverId)
-      // For now, we just show it
-      toast.info(`New message from ${msg.senderId}`);
-    });
+    // 5. Books
+    const qBooks = query(collection(db, 'books'));
+    const unsubBooks = onSnapshot(qBooks, (snapshot) => {
+      setBooks(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Book)));
+    }, (error) => console.error("Error fetching books:", error));
+
+    // 6. Community Posts
+    const qPosts = query(collection(db, 'posts'), orderBy('timestamp', 'desc'));
+    const unsubPosts = onSnapshot(qPosts, (snapshot) => {
+      setPosts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post)));
+    }, (error) => console.error("Error fetching posts:", error));
+
+    // 7. Members Directory (Usually you might restrict this in security rules)
+    const qMembers = query(collection(db, 'users'));
+    const unsubMembers = onSnapshot(qMembers, (snapshot) => {
+      setMembers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member)));
+    }, (error) => console.error("Error fetching members:", error));
 
     return () => {
-      newSocket.close();
+      unsubSermons();
+      unsubEvents();
+      unsubArticles();
+      unsubGallery();
+      unsubBooks();
+      unsubPosts();
+      unsubMembers();
     };
   }, []);
 
-  // Fetch Backend Data
+  // Set up listener for direct messages only if user is logged in
   useEffect(() => {
-    const fetchBackendData = async () => {
-      try {
-        // Fetch Books
-        const booksRes = await fetch(`${API_BASE_URL}/books`);
-        if (booksRes.ok) setBooks(await booksRes.json());
+    if (!user) {
+      setDirectMessages([]);
+      return;
+    }
+    const qMessages = query(collection(db, 'messages')); // Note: A real app would filter by receiverId
+    const unsubMessages = onSnapshot(qMessages, (snapshot) => {
+       const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DirectMessage));
+       setDirectMessages(msgs);
+    }, (error) => console.error("Error fetching messages:", error));
 
-        // Fetch Events
-        const eventsRes = await fetch(`${API_BASE_URL}/events`);
-        if (eventsRes.ok) setEvents(await eventsRes.json());
+    return () => unsubMessages();
+  }, [user]);
 
-        // Fetch Posts
-        const postsRes = await fetch(`${API_BASE_URL}/posts`);
-        if (postsRes.ok) setPosts(await postsRes.json());
+  // --- CRUD API Helpers (Replacing REST/LocalState) ---
 
-        // Fetch Members
-        const membersRes = await fetch(`${API_BASE_URL}/users`);
-        if (membersRes.ok) setMembers(await membersRes.json());
-
-        // Fetch Messages
-        const messagesRes = await fetch(`${API_BASE_URL}/messages`);
-        if (messagesRes.ok) setDirectMessages(await messagesRes.json());
-
-      } catch (error) {
-        console.log('Backend not fully connected, using some local data');
+  const addSermon = async (item: Sermon) => {
+    try {
+      if(item.id && !item.id.startsWith('s')) { 
+        // using existing ID if valid, else generate
+        await setDoc(doc(db, 'sermons', item.id), item);
+      } else {
+        await addDoc(collection(db, 'sermons'), item);
       }
-    };
-    fetchBackendData();
-  }, []);
+      toast.success('Sermon added successfully');
+    } catch (e) {
+      toast.error('Failed to add sermon');
+      console.error(e);
+    }
+  };
 
-  // --- Actions ---
+  const updateSermon = async (item: Sermon) => {
+    try {
+      await updateDoc(doc(db, 'sermons', item.id), { ...item });
+      toast.success('Sermon updated successfully');
+    } catch (e) {
+      toast.error('Failed to update sermon');
+      console.error(e);
+    }
+  };
 
-  const addSermon = (item: Sermon) => setSermons(prev => [item, ...prev]);
-  const updateSermon = (item: Sermon) => setSermons(prev => prev.map(i => i.id === item.id ? item : i));
-  const deleteSermon = (id: string) => setSermons(prev => prev.filter(i => i.id !== id));
+  const deleteSermon = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'sermons', id));
+      toast.success('Sermon deleted');
+    } catch (e) { console.error(e); }
+  };
 
-  // Event Actions (Backend Connected)
+  // Events
   const addEvent = async (item: Event) => {
-    try {
-        const res = await fetch(`${API_BASE_URL}/events`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(item)
-        });
-        if (res.ok) {
-            const newEvent = await res.json();
-            setEvents(prev => [newEvent, ...prev]);
-            toast.success('Event created successfully');
-        }
-    } catch (e) { console.error("API Error", e); }
+    try { await addDoc(collection(db, 'events'), item); toast.success('Event created'); } 
+    catch (e) { console.error(e); }
   };
-  
   const updateEvent = async (item: Event) => {
-    setEvents(prev => prev.map(i => i.id === item.id ? item : i));
-    try {
-        await fetch(`${API_BASE_URL}/events/${item.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(item)
-        });
-        toast.success('Event updated');
-    } catch (e) { console.error("API Error", e); }
+    try { await updateDoc(doc(db, 'events', item.id), { ...item }); toast.success('Event updated'); } 
+    catch (e) { console.error(e); }
   };
-
   const deleteEvent = async (id: string) => {
-     setEvents(prev => prev.filter(i => i.id !== id));
-     try {
-        await fetch(`${API_BASE_URL}/events/${id}`, {
-            method: 'DELETE'
-        });
-        toast.success('Event deleted');
-     } catch (e) { console.error("API Error", e); }
+    try { await deleteDoc(doc(db, 'events', id)); toast.success('Event deleted'); } 
+    catch (e) { console.error(e); }
   };
 
-  const addArticle = (item: Article) => setArticles(prev => [item, ...prev]);
-  const updateArticle = (item: Article) => setArticles(prev => prev.map(i => i.id === item.id ? item : i));
-  const deleteArticle = (id: string) => setArticles(prev => prev.filter(i => i.id !== id));
+  // Articles
+  const addArticle = async (item: Article) => {
+    try { await addDoc(collection(db, 'articles'), item); toast.success('Article created'); } 
+    catch (e) { console.error(e); }
+  };
+  const updateArticle = async (item: Article) => {
+    try { await updateDoc(doc(db, 'articles', item.id), { ...item }); toast.success('Article updated'); } 
+    catch (e) { console.error(e); }
+  };
+  const deleteArticle = async (id: string) => {
+    try { await deleteDoc(doc(db, 'articles', id)); toast.success('Article deleted'); } 
+    catch (e) { console.error(e); }
+  };
 
-  const addGalleryItem = (item: GalleryItem) => setGalleryItems(prev => [item, ...prev]);
-  const deleteGalleryItem = (id: string) => setGalleryItems(prev => prev.filter(i => i.id !== id));
+  // Gallery
+  const addGalleryItem = async (item: GalleryItem) => {
+    try { await addDoc(collection(db, 'gallery'), item); toast.success('Media added'); } 
+    catch (e) { console.error(e); }
+  };
+  const deleteGalleryItem = async (id: string) => {
+    try { await deleteDoc(doc(db, 'gallery', id)); toast.success('Media deleted'); } 
+    catch (e) { console.error(e); }
+  };
 
-  // Book Actions with API Sync
+  // Books
   const addBook = async (item: Book) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/books`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(item)
-      });
-      if (res.ok) {
-          const newBook = await res.json();
-          setBooks(prev => [newBook, ...prev]);
-          toast.success('Book added successfully');
-      }
-    } catch (err) {
-      console.error("Failed to save book to backend", err);
-    }
+    try { await addDoc(collection(db, 'books'), item); toast.success('Book published'); } 
+    catch (e) { console.error(e); }
   };
-
   const updateBook = async (item: Book) => {
-     setBooks(prev => prev.map(i => i.id === item.id ? item : i));
-     try {
-        await fetch(`${API_BASE_URL}/books/${item.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(item)
-        });
-        toast.success('Book updated');
-     } catch (e) { console.error("API Error", e); }
+    try { await updateDoc(doc(db, 'books', item.id), { ...item }); toast.success('Book updated'); } 
+    catch (e) { console.error(e); }
   };
-
   const deleteBook = async (id: string) => {
-     setBooks(prev => prev.filter(i => i.id !== id));
-     try {
-        await fetch(`${API_BASE_URL}/books/${id}`, {
-            method: 'DELETE'
-        });
-        toast.success('Book deleted');
-     } catch (e) { console.error("API Error", e); }
+    try { await deleteDoc(doc(db, 'books', id)); toast.success('Book deleted'); } 
+    catch (e) { console.error(e); }
   };
 
-  // Community Actions
-  const addPost = async (postData: Post | FormData) => {
-    if (postData instanceof FormData) {
-      try {
-        const res = await fetch(`${API_BASE_URL}/posts`, {
-          method: 'POST',
-          body: postData
-        });
-        if (res.ok) {
-          toast.success('Post published!');
-          // Socket will handle the update
-        }
-      } catch (e) { 
-          console.error("Failed to post", e); 
-          toast.error('Failed to publish post');
-      }
+  // Community
+  const addPost = async (postData: Omit<Post, 'id' | 'timestamp' | 'likes' | 'comments' | 'likedBy'>) => {
+    try {
+      const newPost = {
+        ...postData,
+        likes: 0,
+        comments: 0,
+        likedBy: [],
+        timestamp: new Date().toISOString()
+      };
+      await addDoc(collection(db, 'posts'), newPost);
+      toast.success('Post published!');
+    } catch (e) {
+      toast.error('Failed to publish post');
+      console.error(e);
     }
   };
-  
+
   const likePost = async (postId: string, userId: string) => {
     try {
-        await fetch(`${API_BASE_URL}/posts/${postId}/like`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId })
-        });
+      await updateDoc(doc(db, 'posts', postId), {
+        likedBy: arrayUnion(userId)
+      });
+      // A cloud function usually tracks the total size, but we can do it simplistically here too
     } catch (e) { console.error("Failed to like post", e); }
   };
 
   const addComment = async (postId: string, comment: { authorName: string, text: string }) => {
     try {
-        await fetch(`${API_BASE_URL}/posts/${postId}/comments`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(comment)
-        });
-        toast.success('Comment added');
+      const cmt = { ...comment, id: Date.now().toString(), timestamp: new Date().toISOString() };
+      await updateDoc(doc(db, 'posts', postId), {
+        commentList: arrayUnion(cmt)
+      });
+      toast.success('Comment added');
     } catch (e) { console.error("Failed to add comment", e); }
   };
 
-  const sendDirectMessage = async (msg: DirectMessage) => {
+  const sendDirectMessage = async (msgData: Omit<DirectMessage, 'id' | 'timestamp' | 'read'>) => {
       try {
-        const res = await fetch(`${API_BASE_URL}/messages`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(msg)
-        });
-        if (res.ok) {
-            // Socket will handle update
-        }
+        const msg = {
+          ...msgData,
+          read: false,
+          timestamp: new Date().toISOString()
+        };
+        await addDoc(collection(db, 'messages'), msg);
       } catch (e) { console.error("Failed to send message", e); }
   };
 

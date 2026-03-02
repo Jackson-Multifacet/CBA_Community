@@ -274,7 +274,7 @@ const OTChallenge: React.FC = () => {
                  <div className="bg-blue-50 border border-blue-100 p-4 rounded-2xl">
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-[10px] font-black uppercase text-blue-600 tracking-widest">General Announcement</span>
-                        <span className="text-[10px] text-blue-400 font-bold">FEBRUARY 28</span>
+                        <span className="text-[10px] text-blue-400 font-bold">MARCH 8</span>
                     </div>
                     <h4 className="font-bold text-blue-900 mb-1">Pre-Challenge Launch Stream</h4>
                     <p className="text-xs text-blue-700 leading-relaxed">Join Pastor Michael tomorrow at 7 PM for a live session to prepare our hearts for the 90-day journey.</p>
@@ -282,7 +282,7 @@ const OTChallenge: React.FC = () => {
                  <div className="bg-gold-50 border border-gold-100 p-4 rounded-2xl">
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-[10px] font-black uppercase text-gold-600 tracking-widest">Email Notification</span>
-                        <span className="text-[10px] text-gold-400 font-bold">MARCH 1</span>
+                        <span className="text-[10px] text-gold-400 font-bold">MARCH 9</span>
                     </div>
                     <h4 className="font-bold text-gold-900 mb-1">Daily Reminders Active</h4>
                     <p className="text-xs text-gold-700 leading-relaxed">Daily emails with insights and reading links will be sent to all members registered in the portal.</p>

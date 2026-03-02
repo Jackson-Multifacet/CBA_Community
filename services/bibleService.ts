@@ -3,7 +3,8 @@ import { BibleApiResponse, BibleTranslation, CommentaryEntry } from '../types';
 import { GoogleGenAI } from "@google/genai";
 
 // Fix: Always use process.env.API_KEY directly as per SDK guidelines
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = process.env.API_KEY || 'missing-api-key';
+const ai = new GoogleGenAI({ apiKey });
 
 export const BIBLE_BOOKS = [
   "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy", "Joshua", "Judges", "Ruth", "1 Samuel", "2 Samuel", 

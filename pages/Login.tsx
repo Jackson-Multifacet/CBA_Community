@@ -3,6 +3,25 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+const getAuthErrorMessage = (code: string): string => {
+  switch (code) {
+    case 'auth/invalid-credential':
+    case 'auth/user-not-found':
+    case 'auth/wrong-password':
+      return 'Incorrect email or password. Please try again.';
+    case 'auth/invalid-email':
+      return 'Please enter a valid email address.';
+    case 'auth/user-disabled':
+      return 'This account has been disabled. Please contact support.';
+    case 'auth/too-many-requests':
+      return 'Too many failed attempts. Please wait a moment and try again.';
+    case 'auth/network-request-failed':
+      return 'Network error. Please check your internet connection.';
+    default:
+      return 'Something went wrong. Please try again.';
+  }
+};
+
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,14 +36,15 @@ const Login: React.FC = () => {
     setSubmitting(true);
     
     try {
-      await login(email);
+      await login(email, password);
       navigate('/portal');
-    } catch (err) {
-      setError('Invalid credentials or user not found.');
+    } catch (err: any) {
+      setError(getAuthErrorMessage(err.code));
     } finally {
       setSubmitting(false);
     }
   };
+
 
   return (
     <div className="min-h-screen pt-20 pb-12 flex items-center justify-center relative overflow-hidden">

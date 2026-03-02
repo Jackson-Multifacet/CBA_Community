@@ -2,7 +2,8 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
 // Fix: Always use process.env.API_KEY directly as per SDK guidelines
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = process.env.API_KEY || 'missing-api-key';
+const ai = new GoogleGenAI({ apiKey });
 
 // System instruction for the spiritual companion
 const CHATBOT_INSTRUCTION = `You are a warm, wise, and empathetic spiritual assistant for Christ Believers Assembly. 

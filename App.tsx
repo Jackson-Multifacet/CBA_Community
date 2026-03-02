@@ -4,6 +4,7 @@ import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-d
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ChatAssistant from './components/ChatAssistant';
+import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import About from './pages/About';
 import Sermons from './pages/Sermons';
@@ -49,15 +50,23 @@ const AppContent: React.FC = () => {
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/portal" element={<MemberPortal />} />
-          <Route path="/admin" element={<AdminDashboard />} />
+          
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/portal" element={<MemberPortal />} />
+            <Route path="/ot-challenge" element={<OTChallenge />} />
+          </Route>
+          
+          <Route element={<ProtectedRoute adminOnly={true} />}>
+            <Route path="/admin" element={<AdminDashboard />} />
+          </Route>
+
           <Route path="/school-of-word" element={<SchoolOfTheWord />} />
           <Route path="/bible-institute" element={<BibleInstitute />} />
           <Route path="/library" element={<Library />} />
           <Route path="/articles" element={<Articles />} />
           <Route path="/articles/:id" element={<ArticleDetail />} />
           <Route path="/study" element={<StudyMode />} />
-          <Route path="/ot-challenge" element={<OTChallenge />} />
           <Route path="/bible-trivia" element={<BibleTrivia />} />
         </Routes>
       </main>
