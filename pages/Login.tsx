@@ -121,7 +121,7 @@ const Login: React.FC = () => {
                 </div>
                 
                 <div className="mt-6 pt-6 border-t border-gray-100 text-center text-xs text-gray-400">
-                    <p>Demo Account: joshua.d@example.com / any password</p>
+                    <p>Designed By Jackson Multifacet</p>
                 </div>
             </div>
         </div>

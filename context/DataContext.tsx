@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Sermon, Event, Article, GalleryItem, Book, Post, DirectMessage, Member, Comment } from '../types';
+import { Sermon, Event, Article, GalleryItem, Book, Post, DirectMessage, Member, Comment, WalletTransaction } from '../types';
 import { db } from '../src/firebase';
 import { 
   collection, 
@@ -14,7 +14,9 @@ import {
   orderBy, 
   addDoc,
   serverTimestamp,
-  arrayUnion
+  arrayUnion,
+  or,
+  where
 } from 'firebase/firestore';
 import { useAuth } from './AuthContext';
 
@@ -27,6 +29,7 @@ interface DataContextType {
   posts: Post[];
   members: Member[];
   directMessages: DirectMessage[];
+  transactions: WalletTransaction[];
   
   // Sermon Actions
   addSermon: (sermon: Sermon) => Promise<void>;
@@ -57,6 +60,7 @@ interface DataContextType {
   likePost: (postId: string, userId: string) => Promise<void>;
   addComment: (postId: string, comment: { authorName: string, text: string }) => Promise<void>;
   sendDirectMessage: (msg: Omit<DirectMessage, 'id' | 'timestamp' | 'read'>) => Promise<void>;
+  addTransaction: (transaction: Omit<WalletTransaction, 'id'>) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -72,6 +76,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [posts, setPosts] = useState<Post[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [directMessages, setDirectMessages] = useState<DirectMessage[]>([]);
+  const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
 
   // Setup Real-time Listeners for all collections
   useEffect(() => {
@@ -128,19 +133,41 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Set up listener for direct messages only if user is logged in
+  // Listen for user-specific data (Messages & Transactions)
   useEffect(() => {
     if (!user) {
       setDirectMessages([]);
+      setTransactions([]);
       return;
     }
-    const qMessages = query(collection(db, 'messages')); // Note: A real app would filter by receiverId
+    
+    // Messages Optimization
+    const qMessages = query(
+      collection(db, 'messages'),
+      or(
+        where('senderId', '==', user.id),
+        where('receiverId', '==', user.id)
+      )
+    );
     const unsubMessages = onSnapshot(qMessages, (snapshot) => {
        const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as DirectMessage));
        setDirectMessages(msgs);
     }, (error) => console.error("Error fetching messages:", error));
 
-    return () => unsubMessages();
+    // Transactions Optimization (Specific to user)
+    const qTransactions = query(
+      collection(db, 'transactions'),
+      where('userId', '==', user.id),
+      orderBy('date', 'desc')
+    );
+    const unsubTransactions = onSnapshot(qTransactions, (snapshot) => {
+      setTransactions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WalletTransaction)));
+    }, (error) => console.error("Error fetching transactions:", error));
+
+    return () => {
+      unsubMessages();
+      unsubTransactions();
+    };
   }, [user]);
 
   // --- CRUD API Helpers (Replacing REST/LocalState) ---
@@ -277,15 +304,27 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (e) { console.error("Failed to send message", e); }
   };
 
+  const addTransaction = async (txData: Omit<WalletTransaction, 'id'>) => {
+      try {
+        await addDoc(collection(db, 'transactions'), {
+          ...txData,
+          userId: user?.id,
+          date: new Date().toISOString()
+        });
+      } catch (e) {
+        console.error("Failed to add transaction", e);
+      }
+  };
+
   return (
     <DataContext.Provider value={{
-      sermons, events, articles, galleryItems, books, posts, members, directMessages,
+      sermons, events, articles, galleryItems, books, posts, members, directMessages, transactions,
       addSermon, updateSermon, deleteSermon,
       addEvent, updateEvent, deleteEvent,
       addArticle, updateArticle, deleteArticle,
       addGalleryItem, deleteGalleryItem,
       addBook, updateBook, deleteBook,
-      addPost, likePost, addComment, sendDirectMessage
+      addPost, likePost, addComment, sendDirectMessage, addTransaction
     }}>
       {children}
     </DataContext.Provider>

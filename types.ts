@@ -92,6 +92,11 @@ export interface Member {
     phone: string;
     relation: string;
   };
+  privacySettings?: {
+    showInDirectory: boolean;
+    showPhone: boolean;
+    showEmail: boolean;
+  };
 }
 
 export interface WalletTransaction {

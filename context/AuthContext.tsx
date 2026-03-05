@@ -101,6 +101,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ...restOfUserData,
         memberSince: new Date().getFullYear().toString(),
         avatarUrl: `https://ui-avatars.com/api/?name=${memberData.firstName}+${memberData.lastName}&background=random`,
+        privacySettings: {
+          showInDirectory: true,
+          showPhone: true,
+          showEmail: true
+        }
       };
 
       // 3. Save the profile to Firestore using the Auth UID as the document ID

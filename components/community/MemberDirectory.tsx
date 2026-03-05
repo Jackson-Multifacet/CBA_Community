@@ -15,6 +15,7 @@ const MemberDirectory: React.FC<MemberDirectoryProps> = ({ onMessage }) => {
 
   const filteredMembers = members.filter(m => 
     m.id !== user?.id && // Don't show current user
+    (m.privacySettings?.showInDirectory !== false) && // Respect privacy settings
     (m.firstName.toLowerCase().includes(searchTerm.toLowerCase()) || 
      m.lastName.toLowerCase().includes(searchTerm.toLowerCase()))
   );

@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
+declare const PaystackPop: any;
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { 
   CreditCard, 
@@ -38,9 +38,11 @@ import { useAuth } from '../context/AuthContext';
 import { useCurrency } from '../context/CurrencyContext';
 import CurrencySwitcher from '../components/CurrencySwitcher';
 import Community from '../components/community/Community';
+import { useData } from '../context/DataContext';
 
 const MemberPortal: React.FC = () => {
   const { user, logout, updateProfile, isLoading, campuses } = useAuth();
+  const { transactions, addTransaction } = useData();
   const { formatAmount, currency } = useCurrency();
   const navigate = useNavigate();
   const location = useLocation();
@@ -61,11 +63,7 @@ const MemberPortal: React.FC = () => {
     }
   }, [user, isLoading, navigate]);
 
-  const [transactions, setTransactions] = useState<WalletTransaction[]>([
-    { id: 't1', date: '2023-11-01', description: 'Monthly Tithe', amount: 450.00, type: 'credit', category: 'Tithe' },
-    { id: 't2', date: '2023-10-29', description: 'Sunday Coffee (Cafe)', amount: 4.50, type: 'debit', category: 'Cafe' },
-    { id: 't4', date: '2023-10-20', description: 'Book: Purpose Driven Life', amount: 15.00, type: 'debit', category: 'Bookstore' },
-  ]);
+  // Root state removed as we use DataContext transactions
   const [showGiveModal, setShowGiveModal] = useState(false);
   const [giveAmount, setGiveAmount] = useState('');
   const [givingType, setGivingType] = useState<'Tithe' | 'Offering'>('Tithe');
@@ -98,25 +96,35 @@ const MemberPortal: React.FC = () => {
   };
 
   const handleGive = () => {
-    if (!giveAmount) return;
+    if (!giveAmount || !user) return;
     const amount = parseFloat(giveAmount);
     if (isNaN(amount) || amount <= 0) return;
     
-    // In a real app, this would integrate with a payment gateway like Paystack
-    // For now, we just record the transaction
-    
-    const newTransaction: WalletTransaction = {
-      id: Date.now().toString(),
-      date: new Date().toISOString().split('T')[0],
-      description: `Online ${givingType} (${paymentMethod === 'bank' ? 'Bank Transfer' : 'Card'})`,
-      amount: amount,
-      type: 'credit',
-      category: givingType
-    };
-    setTransactions(prev => [newTransaction, ...prev]);
-    setShowGiveModal(false);
-    setGiveAmount('');
-    alert(paymentMethod === 'bank' ? 'Please complete the transfer using the details provided. Your wallet will be updated once confirmed.' : 'Payment successful!');
+    const handler = PaystackPop.setup({
+      key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_placeholder',
+      email: user.email,
+      amount: amount * 100, // Paystack uses Kobo/Cents
+      currency: currency.code === 'NGN' ? 'NGN' : 'USD',
+      ref: '' + Math.floor((Math.random() * 1000000000) + 1),
+      onClose: () => {
+        alert('Transaction cancelled.');
+      },
+      callback: (response: any) => {
+        // In production, you would verify this on the server
+        const newTransaction: Omit<WalletTransaction, 'id'> = {
+          date: new Date().toISOString(),
+          description: `Online ${givingType} (Ref: ${response.reference})`,
+          amount: amount,
+          type: 'credit',
+          category: givingType
+        };
+        addTransaction(newTransaction);
+        setShowGiveModal(false);
+        setGiveAmount('');
+        alert('Thank you for your seed! Your Kingdom Wallet has been updated.');
+      }
+    });
+    handler.openIframe();
   };
 
   const handleSaveJournal = async () => {
@@ -293,7 +301,7 @@ const MemberPortal: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="glass-panel p-6 rounded-2xl shadow-sm">
+                 <div className="glass-panel p-6 rounded-2xl shadow-sm">
                     <h3 className="text-lg font-bold text-church-800 mb-4 border-b border-gray-100 pb-2 flex items-center gap-2"><Church size={18} /> Church Details</h3>
                     <div className="space-y-4">
                         <div>
@@ -307,6 +315,51 @@ const MemberPortal: React.FC = () => {
                         <div>
                             <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Role</span>
                             <p className="text-church-600 font-bold bg-church-50 inline-block px-3 py-1 rounded-full mt-1 text-xs">{user.role}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="glass-panel p-6 rounded-2xl shadow-sm md:col-span-2">
+                    <h3 className="text-lg font-bold text-church-800 mb-4 border-b border-gray-100 pb-2 flex items-center gap-2"><Sparkles size={18} /> Privacy Settings</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                            <div>
+                                <p className="text-sm font-bold text-gray-900">Show in Directory</p>
+                                <p className="text-xs text-gray-500">Allow other members to find you</p>
+                            </div>
+                            <input 
+                                type="checkbox" 
+                                disabled={!isEditingProfile}
+                                checked={editForm.privacySettings?.showInDirectory ?? true}
+                                onChange={e => handleEditChange('privacySettings.showInDirectory', e.target.checked)}
+                                className="w-5 h-5 accent-church-600"
+                            />
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                            <div>
+                                <p className="text-sm font-bold text-gray-900">Show Phone</p>
+                                <p className="text-xs text-gray-500">Visible to other members</p>
+                            </div>
+                            <input 
+                                type="checkbox" 
+                                disabled={!isEditingProfile}
+                                checked={editForm.privacySettings?.showPhone ?? true}
+                                onChange={e => handleEditChange('privacySettings.showPhone', e.target.checked)}
+                                className="w-5 h-5 accent-church-600"
+                            />
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                            <div>
+                                <p className="text-sm font-bold text-gray-900">Show Email</p>
+                                <p className="text-xs text-gray-500">Visible to other members</p>
+                            </div>
+                            <input 
+                                type="checkbox" 
+                                disabled={!isEditingProfile}
+                                checked={editForm.privacySettings?.showEmail ?? true}
+                                onChange={e => handleEditChange('privacySettings.showEmail', e.target.checked)}
+                                className="w-5 h-5 accent-church-600"
+                            />
                         </div>
                     </div>
                 </div>
@@ -401,21 +454,24 @@ const MemberPortal: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Payment Method</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Giving Channel</label>
                 <div className="flex gap-2">
                   <button 
-                    onClick={() => setPaymentMethod('bank')}
-                    className={`flex-1 py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-2 ${paymentMethod === 'bank' ? 'bg-church-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                    onClick={() => setPaymentMethod('card')}
+                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 ${paymentMethod === 'card' ? 'bg-church-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                   >
-                    <Church size={16} /> Bank Transfer
+                    <CreditCard size={18} /> Pay Online
                   </button>
                   <button 
-                    disabled
-                    className={`flex-1 py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-2 bg-gray-100 text-gray-400 cursor-not-allowed`}
+                    onClick={() => setPaymentMethod('bank')}
+                    className={`flex-1 py-3 rounded-xl font-bold text-sm transition flex items-center justify-center gap-2 ${paymentMethod === 'bank' ? 'bg-church-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                   >
-                    <CreditCard size={16} /> Card (Coming Soon)
+                    <Church size={18} /> Bank Details
                   </button>
                 </div>
+                <p className="text-[10px] text-gray-400 mt-2 text-center flex items-center justify-center gap-1">
+                  <Sparkles size={10} /> Securely processed by <strong>Paystack</strong>
+                </p>
               </div>
 
               {paymentMethod === 'bank' && (
@@ -443,9 +499,9 @@ const MemberPortal: React.FC = () => {
 
               <button 
                 onClick={handleGive}
-                className="w-full bg-church-600 text-white py-3 rounded-xl font-bold hover:bg-church-700 transition shadow-lg mt-4"
+                className="w-full bg-church-600 text-white py-4 rounded-xl font-bold hover:bg-church-700 transition shadow-lg mt-4 flex items-center justify-center gap-2"
               >
-                {paymentMethod === 'bank' ? 'I Have Made the Transfer' : 'Process Payment'}
+                {paymentMethod === 'card' ? <><CreditCard size={18} /> Proceed to Pay</> : <><History size={18} /> I have made the transfer</>}
               </button>
             </div>
           </div>
