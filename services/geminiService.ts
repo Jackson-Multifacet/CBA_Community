@@ -16,7 +16,7 @@ export const generatePrayerResponse = async (request: string, name: string): Pro
   // Fix: Removed redundant API key check as it's assumed to be present
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash',
       contents: `Write a short, comforting, and scripturally sound prayer for ${name} regarding this request: "${request}". 
       The tone should be hopeful and faithful. Do not exceed 100 words.`,
     });
@@ -31,7 +31,7 @@ export const chatWithSpiritualCompanion = async (message: string, history: { rol
   // Fix: Removed redundant API key check
   try {
     const chat = ai.chats.create({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash',
       config: {
         systemInstruction: CHATBOT_INSTRUCTION,
       },
@@ -50,7 +50,7 @@ export const summarizeSermon = async (sermonTitle: string, passage: string): Pro
    // Fix: Removed redundant API key check
    try {
      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
+        model: 'gemini-2.5-flash',
         contents: `Provide a brief, inspiring 3-sentence summary of the spiritual themes typically associated with the Bible passage ${passage} and a sermon titled "${sermonTitle}".`,
      });
      return response.text || "A powerful message on faith.";
@@ -63,7 +63,7 @@ export const generateDevotionalThought = async (journalEntry: string): Promise<s
   // Fix: Removed redundant API key check
   try {
     const response = await ai.models.generateContent({
-       model: 'gemini-3-flash-preview',
+       model: 'gemini-2.5-flash',
        contents: `Read this personal journal entry from a church member: "${journalEntry}". 
        Provide a single relevant Bible verse (Reference and text) and a one-sentence encouraging thought related to their entry.
        Format it as: "**Scripture Reference:** Verse text... \n\n**Insight:** Thought..."`,
@@ -79,7 +79,7 @@ export const generateDevotionalThought = async (journalEntry: string): Promise<s
 export const generateTriviaQuestion = async (): Promise<{ question: string; options: string[]; correctAnswer: string; reference: string }> => {
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash',
       contents: "Generate a multiple-choice Bible trivia question. It can be from the Old or New Testament. Ensure the options are plausible.",
       config: {
         responseMimeType: "application/json",

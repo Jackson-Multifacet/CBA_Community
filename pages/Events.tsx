@@ -49,7 +49,7 @@ const Events: React.FC = () => {
                         <Sparkles size={14} /> Major Church Event
                     </div>
                     <h2 className="text-4xl md:text-6xl font-serif font-bold mb-6 leading-tight">The Old Testament <br/><span className="text-gold-400">In 3 Months</span></h2>
-                    <p className="text-lg text-church-100 mb-8 max-w-xl">From Monday, March 9th to May 9th, 2026. A collective spiritual pursuit of the entire CBA family. Are you ready?</p>
+                    <p className="text-lg text-church-100 mb-8 max-w-xl">From Monday, March 16th to June 16th, 2026. A collective spiritual pursuit of the entire CBA family. Are you ready?</p>
                     <button 
                       onClick={() => handleRegister('ot-2026')}
                       className="bg-white text-church-900 px-10 py-4 rounded-full font-bold hover:bg-gold-500 transition shadow-xl flex items-center gap-2 mx-auto md:mx-0 group"

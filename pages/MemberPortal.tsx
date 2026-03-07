@@ -69,17 +69,11 @@ const MemberPortal: React.FC = () => {
   const [givingType, setGivingType] = useState<'Tithe' | 'Offering'>('Tithe');
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'bank'>('bank');
 
-  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([
-    { id: 'j1', date: '2023-11-02', content: 'Reflecting on Psalm 23 today. The Lord truly is my Shepherd.', aiReflection: 'This is a beautiful reflection on God\'s provision and guidance. Consider how He has led you in the past week.' },
-    { id: 'j2', date: '2023-10-28', content: 'Praying for the upcoming youth retreat.', aiReflection: 'Prayer is powerful. You might also want to reach out to the youth leaders to see if they need any specific support.' },
-  ]);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [newJournalContent, setNewJournalContent] = useState('');
   const [isGeneratingDevotional, setIsGeneratingDevotional] = useState(false);
 
-  const messages: InboxMessage[] = [
-    { id: 'm1', sender: 'Pastor Michael', subject: 'Volunteer Appreciation Dinner', preview: 'We would love to host you this Friday...', date: '2 hrs ago', read: false, priority: 'normal' },
-    { id: 'm2', sender: 'Admin Team', subject: 'Tax Statement Available', preview: 'Your 2023 giving statement is ready for download.', date: '1 day ago', read: true, priority: 'high' },
-  ];
+  const messages: InboxMessage[] = [];
 
   if (!user) return null;
 
@@ -217,41 +211,7 @@ const MemberPortal: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="glass-panel rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-gray-100/50 flex justify-between items-center bg-gray-50/30">
-            <h3 className="font-bold text-gray-900 flex items-center gap-2"><Calendar size={18} className="text-church-600" /> My Registered Events</h3>
-            <Link to="/events" className="text-church-600 text-xs font-bold hover:underline">Register More</Link>
-          </div>
-          <div className="p-6">
-              <div className="bg-church-50 border border-church-100 rounded-xl p-4 flex gap-4">
-                  <div className="w-12 h-12 bg-white rounded-lg flex flex-col items-center justify-center shadow-sm">
-                      <span className="text-[10px] text-church-600 font-bold uppercase">Nov</span>
-                      <span className="text-lg font-bold text-gray-900 leading-tight">28</span>
-                  </div>
-                  <div>
-                      <h4 className="font-bold text-gray-900 text-sm">Miracle Night 2023</h4>
-                      <p className="text-xs text-gray-500">6:00 PM • Main Sanctuary</p>
-                  </div>
-              </div>
-          </div>
-        </div>
-
-        <div className="glass-panel rounded-2xl shadow-sm overflow-hidden">
-           <div className="p-6 border-b border-gray-100/50 flex justify-between items-center bg-gray-50/30">
-            <h3 className="font-bold text-gray-900 flex items-center gap-2"><ShoppingBag size={18} className="text-gold-600" /> My Library</h3>
-            <Link to="/library" className="text-church-600 text-xs font-bold hover:underline">Browse Library</Link>
-          </div>
-          <div className="p-6 flex gap-4">
-              <div className="w-16 h-20 bg-gray-100 rounded shadow-md overflow-hidden flex-shrink-0">
-                  <img src="https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=200&q=80" alt="Book" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-              </div>
-              <div>
-                  <h4 className="font-bold text-gray-900 text-sm">Foundation of Faith</h4>
-                  <p className="text-xs text-gray-400 mb-3">Pastor Sarah Jenkins</p>
-                  <button className="text-xs bg-church-600 text-white px-3 py-1 rounded-full font-bold">Resume Reading</button>
-              </div>
-          </div>
-        </div>
+        {/* Placeholder for future dynamic Events/Library integration - removed hardcoded 2023 demo data */}
       </div>
     </div>
   );

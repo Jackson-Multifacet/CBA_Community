@@ -16,8 +16,17 @@ export const BIBLE_BOOKS = [
   "Hebrews", "James", "1 Peter", "2 Peter", "1 John", "2 John", "3 John", "Jude", "Revelation"
 ];
 
+// Simple in-memory cache for Bible chapters to drastically improve response times
+const bibleCache = new Map<string, BibleApiResponse>();
+
 export const fetchBibleChapter = async (book: string, chapter: number, translation: BibleTranslation = 'kjv'): Promise<BibleApiResponse> => {
   const formattedBook = book.replace(/ /g, '+');
+  const cacheKey = `${formattedBook}-${chapter}-${translation}`;
+  
+  if (bibleCache.has(cacheKey)) {
+    return bibleCache.get(cacheKey)!;
+  }
+
   const url = `https://bible-api.com/${formattedBook}+${chapter}?translation=${translation}`;
   
   try {
@@ -28,7 +37,9 @@ export const fetchBibleChapter = async (book: string, chapter: number, translati
     if (!response.ok) {
       throw new Error(`The Bible service returned an error (${response.status}).`);
     }
-    return await response.json();
+    const data = await response.json();
+    bibleCache.set(cacheKey, data);
+    return data;
   } catch (err: any) {
     console.error("Bible Fetch Error:", err);
     throw new Error(err.message || 'Connection to Bible service failed.');
@@ -45,7 +56,7 @@ export const fetchCommentary = async (authorKey: 'MHC' | 'JFB', book: string, ch
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash',
       contents: `Retrieve the actual historical commentary text for ${reference} from ${authorName}. 
       Do not summarize. Provide the literal public domain text as found in original volumes. 
       If the specific verse text is part of a larger paragraph, provide that paragraph.
