@@ -60,6 +60,8 @@ interface DataContextType {
   likePost: (postId: string, userId: string) => Promise<void>;
   addComment: (postId: string, comment: { authorName: string, text: string }) => Promise<void>;
   sendDirectMessage: (msg: Omit<DirectMessage, 'id' | 'timestamp' | 'read'>) => Promise<void>;
+  updateDirectMessage: (id: string, content: string) => Promise<void>;
+  deleteDirectMessage: (id: string) => Promise<void>;
   addTransaction: (transaction: Omit<WalletTransaction, 'id'>) => Promise<void>;
 }
 
@@ -304,6 +306,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } catch (e) { console.error("Failed to send message", e); }
   };
 
+  const updateDirectMessage = async (id: string, content: string) => {
+      try {
+        await updateDoc(doc(db, 'messages', id), { content });
+      } catch (e) { console.error("Failed to update message", e); }
+  };
+
+  const deleteDirectMessage = async (id: string) => {
+      try {
+        await deleteDoc(doc(db, 'messages', id));
+      } catch (e) { console.error("Failed to delete message", e); }
+  };
+
   const addTransaction = async (txData: Omit<WalletTransaction, 'id'>) => {
       try {
         await addDoc(collection(db, 'transactions'), {
@@ -324,7 +338,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addArticle, updateArticle, deleteArticle,
       addGalleryItem, deleteGalleryItem,
       addBook, updateBook, deleteBook,
-      addPost, likePost, addComment, sendDirectMessage, addTransaction
+      addPost, likePost, addComment, sendDirectMessage, updateDirectMessage, deleteDirectMessage, addTransaction
     }}>
       {children}
     </DataContext.Provider>

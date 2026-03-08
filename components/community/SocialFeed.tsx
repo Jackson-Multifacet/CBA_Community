@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
-import { Heart, MessageSquare, Share2, Send, Image as ImageIcon, X } from 'lucide-react';
+import { Heart, MessageSquare, Share2, Send, Image as ImageIcon, X, Loader2 } from 'lucide-react';
 import { Post } from '../../types';
+import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../../src/config';
 
 const SocialFeed: React.FC = () => {
   const { posts, addPost, likePost, addComment } = useData();
@@ -12,6 +13,7 @@ const SocialFeed: React.FC = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [newCommentText, setNewCommentText] = useState('');
+  const [isPosting, setIsPosting] = useState(false);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -28,20 +30,42 @@ const SocialFeed: React.FC = () => {
   const handlePostSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if ((!newPostContent.trim() && !selectedImage) || !user) return;
+    
+    setIsPosting(true);
+    let imageUrl = '';
 
-    const formData = new FormData();
-    formData.append('content', newPostContent);
-    formData.append('authorId', user.id);
-    formData.append('authorName', `${user.firstName} ${user.lastName}`);
-    formData.append('authorAvatar', user.avatarUrl);
     if (selectedImage) {
-      formData.append('image', selectedImage);
+      const uploadData = new FormData();
+      uploadData.append('file', selectedImage);
+      uploadData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+      uploadData.append('cloud_name', CLOUDINARY_CLOUD_NAME);
+
+      try {
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+          method: 'POST',
+          body: uploadData,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          imageUrl = data.secure_url;
+        }
+      } catch (err) {
+        console.error("Image upload failed", err);
+      }
     }
 
-    await addPost(formData);
+    await addPost({
+      content: newPostContent,
+      authorId: user.id,
+      authorName: `${user.firstName} ${user.lastName}`,
+      authorAvatar: user.avatarUrl,
+      ...(imageUrl && { imageUrl })
+    } as Omit<Post, 'id' | 'timestamp' | 'likes' | 'comments' | 'likedBy'>);
+
     setNewPostContent('');
     setSelectedImage(null);
     setImagePreview(null);
+    setIsPosting(false);
   };
 
   const handleCommentSubmit = async (e: React.FormEvent, postId: string) => {
@@ -104,10 +128,11 @@ const SocialFeed: React.FC = () => {
               </label>
               <button 
                 type="submit" 
-                disabled={!newPostContent.trim() && !selectedImage}
+                disabled={(!newPostContent.trim() && !selectedImage) || isPosting}
                 className="bg-church-600 text-white px-6 py-2 rounded-full font-bold text-sm hover:bg-church-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                <Send size={16} /> Post
+                {isPosting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} 
+                {isPosting ? 'Posting...' : 'Post'}
               </button>
             </div>
           </form>

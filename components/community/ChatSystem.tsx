@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
-import { Send, User, MoreVertical, Phone, Video } from 'lucide-react';
+import { Send, User, Edit2, Trash2 } from 'lucide-react';
 import { Member, DirectMessage } from '../../types';
 
 interface ChatSystemProps {
@@ -9,11 +9,13 @@ interface ChatSystemProps {
 }
 
 const ChatSystem: React.FC<ChatSystemProps> = ({ initialMember }) => {
-  const { members, directMessages, sendDirectMessage } = useData();
+  const { members, directMessages, sendDirectMessage, updateDirectMessage, deleteDirectMessage } = useData();
   const { user } = useAuth();
   const [selectedMember, setSelectedMember] = useState<Member | null>(initialMember || null);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
 
   // Update selected member when prop changes
   useEffect(() => {
@@ -108,9 +110,7 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ initialMember }) => {
                 </div>
               </div>
               <div className="flex gap-4 text-gray-400">
-                <button className="hover:text-church-600 transition"><Phone size={20} /></button>
-                <button className="hover:text-church-600 transition"><Video size={20} /></button>
-                <button className="hover:text-church-600 transition"><MoreVertical size={20} /></button>
+                {/* Dummy call tools removed per request */}
               </div>
             </div>
 
@@ -119,13 +119,30 @@ const ChatSystem: React.FC<ChatSystemProps> = ({ initialMember }) => {
               {currentMessages.map(msg => {
                 const isMe = msg.senderId === user?.id;
                 return (
-                  <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[70%] rounded-2xl p-3 shadow-sm ${isMe ? 'bg-church-600 text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'}`}>
-                      <p className="text-sm leading-relaxed">{msg.content}</p>
-                      <span className={`text-[10px] block mt-1 text-right ${isMe ? 'text-church-200' : 'text-gray-400'}`}>
-                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
+                  <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group mb-2`}>
+                    {isMe && !editingMessageId && (
+                       <div className="opacity-0 group-hover:opacity-100 flex items-center gap-2 mr-2 transition-opacity">
+                         <button onClick={() => { setEditingMessageId(msg.id); setEditContent(msg.content); }} className="text-gray-400 hover:text-church-600" title="Edit message"><Edit2 size={14} /></button>
+                         <button onClick={() => { if(window.confirm('Delete this message?')) deleteDirectMessage(msg.id) }} className="text-gray-400 hover:text-red-500" title="Delete message"><Trash2 size={14} /></button>
+                       </div>
+                    )}
+                    
+                    {editingMessageId === msg.id ? (
+                      <div className="flex flex-col items-end max-w-[70%] w-full">
+                         <input type="text" value={editContent} onChange={e => setEditContent(e.target.value)} className="w-full p-2 border border-church-200 rounded-lg text-sm mb-1 outline-none focus:ring-2 focus:ring-church-500" />
+                         <div className="flex gap-2">
+                           <button onClick={() => setEditingMessageId(null)} className="text-xs text-gray-400 hover:text-gray-600 font-bold transition">Cancel</button>
+                           <button onClick={() => { updateDirectMessage(msg.id, editContent); setEditingMessageId(null); }} className="text-xs bg-church-600 text-white px-3 py-1 rounded-full font-bold hover:bg-church-700 transition">Save</button>
+                         </div>
+                      </div>
+                    ) : (
+                      <div className={`max-w-[70%] rounded-2xl p-3 shadow-sm ${isMe ? 'bg-church-600 text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none border border-gray-100'}`}>
+                        <p className="text-sm leading-relaxed break-words">{msg.content}</p>
+                        <span className={`text-[10px] block mt-1 text-right ${isMe ? 'text-church-200' : 'text-gray-400'}`}>
+                          {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 );
               })}

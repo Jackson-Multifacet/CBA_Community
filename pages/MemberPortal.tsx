@@ -30,7 +30,8 @@ import {
   Newspaper,
   Book,
   Brain,
-  Users
+  Users,
+  Camera
 } from 'lucide-react';
 import { WalletTransaction, InboxMessage, JournalEntry, Member } from '../types';
 import { generateDevotionalThought } from '../services/geminiService';
@@ -39,6 +40,7 @@ import { useCurrency } from '../context/CurrencyContext';
 import CurrencySwitcher from '../components/CurrencySwitcher';
 import Community from '../components/community/Community';
 import { useData } from '../context/DataContext';
+import { CLOUDINARY_CLOUD_NAME, CLOUDINARY_UPLOAD_PRESET } from '../src/config';
 
 const MemberPortal: React.FC = () => {
   const { user, logout, updateProfile, isLoading, campuses } = useAuth();
@@ -72,6 +74,34 @@ const MemberPortal: React.FC = () => {
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
   const [newJournalContent, setNewJournalContent] = useState('');
   const [isGeneratingDevotional, setIsGeneratingDevotional] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingAvatar(true);
+    const uploadData = new FormData();
+    uploadData.append('file', file);
+    uploadData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    uploadData.append('cloud_name', CLOUDINARY_CLOUD_NAME);
+
+    try {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: uploadData,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      
+      await updateProfile({ avatarUrl: data.secure_url });
+    } catch (err) {
+       console.error(err);
+       alert("Failed to upload avatar.");
+    } finally {
+       setIsUploadingAvatar(false);
+    }
+  };
 
   const messages: InboxMessage[] = [];
 
@@ -523,7 +553,13 @@ const MemberPortal: React.FC = () => {
           <div className="w-full md:w-72 flex-shrink-0 animate-fade-in-up">
             <div className="glass-panel rounded-2xl shadow-sm p-6 mb-6 sticky top-24">
               <div className="flex flex-col items-center text-center mb-8">
-                <img src={user.avatarUrl} alt="Profile" className="w-24 h-24 rounded-full border-4 border-white shadow-md mb-4 object-cover" referrerPolicy="no-referrer" />
+                <div className="relative mb-4 group inline-block">
+                  <img src={user.avatarUrl} alt="Profile" className="w-24 h-24 rounded-full border-4 border-white shadow-md object-cover" referrerPolicy="no-referrer" />
+                  <label className="absolute inset-0 bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer">
+                     {isUploadingAvatar ? <Loader2 size={24} className="animate-spin" /> : <Camera size={24} />}
+                     <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={isUploadingAvatar} />
+                  </label>
+                </div>
                 <h2 className="font-bold text-gray-900 text-xl font-serif">{user.firstName} {user.lastName}</h2>
                 <p className="text-xs text-church-500 uppercase tracking-widest font-bold mt-1 bg-church-50 px-3 py-1 rounded-full">{user.role}</p>
               </div>
